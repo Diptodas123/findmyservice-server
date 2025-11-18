@@ -1,0 +1,35 @@
+package com.FindMyService.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+
+@Entity
+@Table(name = "feedback")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Feedback {
+    @Id
+    @Column(length = 64)
+    private String feedbackId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id", nullable = false)
+    private Service serviceId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
+    private ServiceOrder orderId;
+
+    @Lob
+    private String comment;
+
+    private Instant createdAt;
+}
