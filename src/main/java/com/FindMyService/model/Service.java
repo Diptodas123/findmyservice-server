@@ -4,6 +4,7 @@ import com.FindMyService.model.enums.Availability;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -41,6 +42,7 @@ public class Service {
     @Column(length = 30)
     private Availability availability;
 
+    @Nullable
     private Integer warrantyPeriodMonths;
     private String imageUrl;
     private Instant createdAt;

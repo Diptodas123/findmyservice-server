@@ -37,19 +37,7 @@ public class User {
 
     private String phone;
 
-    @NonNull
-    private String addressLine1;
-
-    private String addressLine2;
-
-    @NonNull
-    private String city;
-
-    @NonNull
-    private String state;
-
-    @NonNull
-    private String zipCode;
+    private String address;
     private Instant createdAt;
     private String profilePictureUrl;
 }

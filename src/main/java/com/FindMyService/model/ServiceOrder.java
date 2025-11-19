@@ -54,15 +54,6 @@ public class ServiceOrder {
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    @Enumerated(EnumType.STRING)
-    private PaymentStatus paymentStatus;
-
-    @Column(precision = 8, scale = 2)
-    private BigDecimal paymentAmount;
-
-    @Column(length = 3)
-    private String paymentCurrency;
-
     private Instant paymentDate;
     private Instant createdAt;
     private Instant updatedAt;

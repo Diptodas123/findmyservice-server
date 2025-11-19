@@ -29,7 +29,20 @@ public class Provider {
     private String email;
 
     private String phone;
-    private String address;
+
+    @NonNull
+    private String addressLine1;
+
+    private String addressLine2;
+
+    @NonNull
+    private String city;
+
+    @NonNull
+    private String state;
+
+    @NonNull
+    private String zipCode;
 
     @ElementCollection
     @Column(name = "image_url")
