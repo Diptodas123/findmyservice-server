@@ -54,7 +54,7 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @PostMapping("/{iorderIdd}/pay")
+    @PostMapping("/{iorderId}/pay")
     public ResponseEntity<Void> payOrder(@PathVariable String orderId) {
         boolean ok = orderService.payOrder(orderId);
         if (ok) {
