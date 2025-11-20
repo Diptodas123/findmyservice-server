@@ -19,19 +19,20 @@ import java.time.LocalDate;
 public class Order {
     @Id
     @Column(length = 64)
-    private String orderId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long orderId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
-    private Service serviceId;
+    private Long serviceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ordered_by_user_id", nullable = false)
-    private User orderedByUserId;
+    private Long UserId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
-    private Provider providerId;
+    private Long providerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
