@@ -16,19 +16,20 @@ import java.time.Instant;
 public class Rating {
     @Id
     @Column(length = 64)
-    private String ratingId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long ratingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
-    private Service serviceId;
+    private Long serviceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User userId;
+    private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
-    private Order orderId;
+    private Long orderId;
 
     @Column(nullable = false)
     @Min(0)

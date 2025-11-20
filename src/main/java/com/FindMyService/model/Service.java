@@ -19,11 +19,12 @@ import java.time.Instant;
 public class Service {
     @Id
     @Column(length = 64)
-    private String serviceId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long serviceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
-    private Provider providerId;
+    private Long providerId;
 
     @Column(name = "service_name", nullable = false, length = 160)
     private String serviceName;

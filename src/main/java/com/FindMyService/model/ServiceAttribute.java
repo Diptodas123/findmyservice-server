@@ -15,11 +15,12 @@ import java.time.Instant;
 public class ServiceAttribute {
     @Id
     @Column(length = 64)
-    private String attributeId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long attributeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_id", nullable = false)
-    private Service serviceId;
+    private Long serviceId;
 
     @Column(length = 100, nullable = false)
     private String attributeName;
