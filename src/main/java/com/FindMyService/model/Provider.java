@@ -17,7 +17,8 @@ import java.util.List;
 public class Provider {
     @Id
     @Column(length = 64)
-    private String providerId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long providerId;
 
     @Column(nullable = false, length = 160)
     private String providerName;
@@ -51,7 +52,7 @@ public class Provider {
     private boolean verified;
     private Instant createdAt;
 
-    @Column(precision = 2, scale = 1)  // Example: 4.5
+    @Column(precision = 2, scale = 1)
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     private BigDecimal avgRating;
