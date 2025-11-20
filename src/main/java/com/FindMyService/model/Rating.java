@@ -28,7 +28,7 @@ public class Rating {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
-    private ServiceOrder orderId;
+    private Order orderId;
 
     @Column(nullable = false)
     @Min(0)

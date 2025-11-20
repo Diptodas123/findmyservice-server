@@ -26,7 +26,7 @@ public class Feedback {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
-    private ServiceOrder orderId;
+    private Order orderId;
 
     @Lob
     private String comment;
