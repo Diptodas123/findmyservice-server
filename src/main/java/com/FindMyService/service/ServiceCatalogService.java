@@ -13,7 +13,7 @@ public class ServiceCatalogService {
         return Collections.emptyList();
     }
 
-    public Optional<com.FindMyService.model.Service> getServiceById(String id) {
+    public Optional<com.FindMyService.model.Service> getServiceById(String serviceId) {
         return Optional.empty();
     }
 
@@ -21,11 +21,11 @@ public class ServiceCatalogService {
         return service;
     }
 
-    public Optional<com.FindMyService.model.Service> updateService(String id, com.FindMyService.model.Service service) {
+    public Optional<com.FindMyService.model.Service> updateService(String serviceId, com.FindMyService.model.Service service) {
         return Optional.empty();
     }
 
-    public boolean deleteService(String id) {
+    public boolean deleteService(String serviceId) {
         return false;
     }
 }

@@ -14,7 +14,7 @@ public class ProviderService {
         return Collections.emptyList();
     }
 
-    public Optional<Provider> getProviderById(String id) {
+    public Optional<Provider> getProviderById(String providerId) {
         return Optional.empty();
     }
 
@@ -22,11 +22,11 @@ public class ProviderService {
         return provider;
     }
 
-    public Optional<Provider> updateProvider(String id, Provider provider) {
+    public Optional<Provider> updateProvider(String providerId, Provider provider) {
         return Optional.empty();
     }
 
-    public boolean deleteProvider(String id) {
+    public boolean deleteProvider(String providerId) {
         return false;
     }
 }

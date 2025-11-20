@@ -14,7 +14,7 @@ public class OrderService {
         return Collections.emptyList();
     }
 
-    public Optional<Order> getOrderById(String id) {
+    public Optional<Order> getOrderById(String orderId) {
         return Optional.empty();
     }
 
@@ -22,15 +22,15 @@ public class OrderService {
         return order;
     }
 
-    public Optional<Order> updateOrder(String id, Order order) {
+    public Optional<Order> updateOrder(String orderId, Order order) {
         return Optional.empty();
     }
 
-    public boolean deleteOrder(String id) {
+    public boolean deleteOrder(String orderId) {
         return false;
     }
 
-    public boolean payOrder(String id) {
+    public boolean payOrder(String orderId) {
         // placeholder for initiating/recording payment
         return false;
     }

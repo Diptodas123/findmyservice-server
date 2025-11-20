@@ -23,9 +23,9 @@ public class ProviderController {
         return ResponseEntity.ok(providerService.getAllProviders());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Provider> getProvider(@PathVariable String id) {
-        return providerService.getProviderById(id)
+    @GetMapping("/{providerId}")
+    public ResponseEntity<Provider> getProvider(@PathVariable String providerId) {
+        return providerService.getProviderById(providerId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -39,16 +39,16 @@ public class ProviderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Provider> updateProvider(@PathVariable String id, @RequestBody Provider provider) {
-        return providerService.updateProvider(id, provider)
+    @PutMapping("/{providerId}")
+    public ResponseEntity<Provider> updateProvider(@PathVariable String providerId, @RequestBody Provider provider) {
+        return providerService.updateProvider(providerId, provider)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProvider(@PathVariable String id) {
-        boolean providerToDelete = providerService.deleteProvider(id);
+    @DeleteMapping("/{providerId}")
+    public ResponseEntity<Void> deleteProvider(@PathVariable String providerId) {
+        boolean providerToDelete = providerService.deleteProvider(providerId);
         if (providerToDelete) {
             return ResponseEntity.noContent().build();
         }

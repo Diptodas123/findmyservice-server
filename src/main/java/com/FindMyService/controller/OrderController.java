@@ -22,9 +22,9 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable String id) {
-        return orderService.getOrderById(id)
+    @GetMapping("/{orderId}")
+    public ResponseEntity<Order> getOrderById(@PathVariable String orderId) {
+        return orderService.getOrderById(orderId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -38,25 +38,25 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newOrder);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Order> updateOrder(@PathVariable String id, @RequestBody Order order) {
-        return orderService.updateOrder(id, order)
+    @PutMapping("/{orderId}")
+    public ResponseEntity<Order> updateOrder(@PathVariable String orderId, @RequestBody Order order) {
+        return orderService.updateOrder(orderId, order)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
-        boolean orderToDelete = orderService.deleteOrder(id);
+    public ResponseEntity<Void> deleteOrder(@PathVariable String orderId) {
+        boolean orderToDelete = orderService.deleteOrder(orderId);
         if (orderToDelete) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @PostMapping("/{id}/pay")
-    public ResponseEntity<Void> payOrder(@PathVariable String id) {
-        boolean ok = orderService.payOrder(id);
+    @PostMapping("/{iorderIdd}/pay")
+    public ResponseEntity<Void> payOrder(@PathVariable String orderId) {
+        boolean ok = orderService.payOrder(orderId);
         if (ok) {
             return ResponseEntity.accepted().build();
         }

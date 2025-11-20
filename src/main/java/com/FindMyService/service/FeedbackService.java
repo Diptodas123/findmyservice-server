@@ -14,7 +14,7 @@ public class FeedbackService {
         return Collections.emptyList();
     }
 
-    public Optional<Feedback> getFeedbackById(String id) {
+    public Optional<Feedback> getFeedbackById(String feedbackId) {
         return Optional.empty();
     }
 

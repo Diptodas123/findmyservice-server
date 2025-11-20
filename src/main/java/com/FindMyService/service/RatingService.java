@@ -14,7 +14,7 @@ public class RatingService {
         return Collections.emptyList();
     }
 
-    public Optional<Rating> getRatingById(String id) {
+    public Optional<Rating> getRatingById(String ratingId) {
         return Optional.empty();
     }
 

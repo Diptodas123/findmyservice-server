@@ -23,9 +23,9 @@ public class RatingController {
         return ResponseEntity.ok(ratingService.getAllRatings());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Rating> getRating(@PathVariable String id) {
-        return ratingService.getRatingById(id)
+    @GetMapping("/{ratingId}")
+    public ResponseEntity<Rating> getRating(@PathVariable String ratingId) {
+        return ratingService.getRatingById(ratingId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }

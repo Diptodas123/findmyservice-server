@@ -14,7 +14,7 @@ public class UserService {
         return Collections.emptyList();
     }
 
-    public Optional<User> getUserById(String id) {
+    public Optional<User> getUserById(String userId) {
         return Optional.empty();
     }
 
@@ -22,11 +22,11 @@ public class UserService {
         return user;
     }
 
-    public Optional<User> updateUser(String id, User user) {
+    public Optional<User> updateUser(String userId, User user) {
         return Optional.empty();
     }
 
-    public boolean deleteUser(String id) {
+    public boolean deleteUser(String userId) {
         return false;
     }
 }

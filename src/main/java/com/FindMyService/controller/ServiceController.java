@@ -23,9 +23,9 @@ public class ServiceController {
         return ResponseEntity.ok(serviceCatalogService.getAllServices());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Service> getService(@PathVariable String id) {
-        return serviceCatalogService.getServiceById(id)
+    @GetMapping("/{serviceId}")
+    public ResponseEntity<Service> getService(@PathVariable String serviceId) {
+        return serviceCatalogService.getServiceById(serviceId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -39,16 +39,16 @@ public class ServiceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(newService);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Service> updateService(@PathVariable String id, @RequestBody Service service) {
-        return serviceCatalogService.updateService(id, service)
+    @PutMapping("/{serviceId}")
+    public ResponseEntity<Service> updateService(@PathVariable String serviceId, @RequestBody Service service) {
+        return serviceCatalogService.updateService(serviceId, service)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteService(@PathVariable String id) {
-        boolean serviceToDelete = serviceCatalogService.deleteService(id);
+    public ResponseEntity<Void> deleteService(@PathVariable String serviceId) {
+        boolean serviceToDelete = serviceCatalogService.deleteService(serviceId);
         if (serviceToDelete) {
             return ResponseEntity.noContent().build();
         }
