@@ -32,7 +32,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
-    private Long providerId;
+    private Provider providerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
