@@ -32,5 +32,5 @@ public class Feedback {
     @Lob
     private String comment;
 
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 }
