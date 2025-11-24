@@ -45,12 +45,15 @@ public class Provider {
     @NonNull
     private String zipCode;
 
+    @NotBlank(message = "Password is required")
+    private String password;
+
     @ElementCollection
     @Column(name = "image_url")
     private List<String> imageUrls;
 
     private boolean verified;
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @Column(precision = 2, scale = 1)
     @DecimalMin("0.0")

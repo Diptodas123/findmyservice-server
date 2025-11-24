@@ -35,5 +35,5 @@ public class Rating {
     @Max(5)
     private Integer score;
 
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 }

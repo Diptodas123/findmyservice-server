@@ -46,7 +46,7 @@ public class ServiceCatalog {
     @Nullable
     private Integer warrantyPeriodMonths;
     private String imageUrl;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Instant createdAt = Instant.now();
+    private Instant updatedAt = Instant.now();
     private boolean active;
 }

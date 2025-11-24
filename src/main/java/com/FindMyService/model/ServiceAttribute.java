@@ -35,5 +35,5 @@ public class ServiceAttribute {
     )
     private String valueType;
 
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 }

@@ -54,7 +54,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    private Instant paymentDate;
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Instant paymentDate = Instant.now();
+    private Instant createdAt = Instant.now();
+    private Instant updatedAt = Instant.now();
 }

@@ -37,7 +37,19 @@ public class User {
 
     private String phone;
 
-    private String address;
-    private Instant createdAt;
+    @NonNull
+    private String addressLine1;
+
+    private String addressLine2;
+
+    @NonNull
+    private String city;
+
+    @NonNull
+    private String state;
+
+    @NonNull
+    private String zipCode;
+    private Instant createdAt = Instant.now();
     private String profilePictureUrl;
 }
