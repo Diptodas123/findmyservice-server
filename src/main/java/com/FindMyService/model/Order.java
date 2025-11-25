@@ -28,7 +28,7 @@ public class Order {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ordered_by_user_id", nullable = false)
-    private User UserId;
+    private User userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
@@ -54,7 +54,8 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    private Instant paymentDate = Instant.now();
+    private String stripePaymentIntentId;
+    private Instant paymentDate;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
 }

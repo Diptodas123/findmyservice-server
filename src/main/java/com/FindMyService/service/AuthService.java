@@ -50,19 +50,15 @@ public class AuthService {
                     return Map.of("error", "Email already registered");
                 }
 
-                Provider provider = new Provider();
-                provider.setProviderName(request.getName());
-                provider.setEmail(request.getEmail());
-                provider.setPassword(request.getPassword());
-                provider.setPhone(request.getPhone());
-                provider.setAddressLine1(request.getAddressLine1());
-                provider.setAddressLine2(request.getAddressLine2());
-                provider.setCity(request.getCity());
-                provider.setState(request.getState());
-                provider.setZipCode(request.getZipCode());
+                Provider provider = Provider
+                        .builder()
+                        .providerName(request.getName())
+                        .email(request.getEmail())
+                        .password(request.getPassword())
+                        .build();
 
-                Provider created = providerService.createProvider(provider);
-                if (created == null || Objects.equals(created.getEmail(), null)) {
+                Provider newProvider = providerService.createProvider(provider);
+                if (newProvider == null || Objects.equals(newProvider.getEmail(), null)) {
                     return Map.of("error", "Unable to register provider");
                 }
             }
@@ -70,20 +66,16 @@ public class AuthService {
                 if (userRepository.existsByEmail(request.getEmail())) {
                     return Map.of("error", "Email already registered");
                 }
-                User user = new User();
-                user.setName(request.getName());
-                user.setEmail(request.getEmail());
-                user.setPassword(request.getPassword());
-                user.setRole(request.getRole());
-                user.setPhone(request.getPhone());
-                user.setAddressLine1(request.getAddressLine1());
-                user.setAddressLine2(request.getAddressLine2());
-                user.setCity(request.getCity());
-                user.setState(request.getState());
-                user.setZipCode(request.getZipCode());
+                User user = User
+                        .builder()
+                        .name(request.getName())
+                        .email(request.getEmail())
+                        .password(request.getPassword())
+                        .role(request.getRole())
+                        .build();
 
-                User created = userService.createUser(user);
-                if (created == null || Objects.equals(created.getUserId(), null)) {
+                User newUser = userService.createUser(user);
+                if (newUser == null || Objects.equals(newUser.getUserId(), null)) {
                     return Map.of("error", "Unable to register user");
                 }
             }
@@ -100,7 +92,7 @@ public class AuthService {
 
         switch (role) {
             case PROVIDER -> {
-                var provider = providerRepository.findByEmail(request.getEmail()).orElse(null);
+                Provider provider = providerRepository.findByEmail(request.getEmail()).orElse(null);
 
                 if (provider == null || !encoder.matches(request.getPassword(), provider.getPassword())) {
                     return Map.of("error", "Invalid email or password");
@@ -109,7 +101,7 @@ public class AuthService {
                 return Map.of("token", token);
             }
             case USER, ADMIN -> {
-                var user = userRepository.findByEmail(request.getEmail()).orElse(null);
+                User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
                 if (user == null || !encoder.matches(request.getPassword(), user.getPassword())) {
                     return Map.of("error", "Invalid email or password");

@@ -2,8 +2,8 @@ package com.FindMyService.model.enums;
 
 public enum OrderStatus {
     REQUESTED,
+    PAID,
     SCHEDULED,
-    IN_PROGRESS,
     COMPLETED,
     CANCELLED
 }

@@ -1,9 +1,14 @@
 package com.FindMyService.repository;
 
 import com.FindMyService.model.Feedback;
+import com.FindMyService.model.Provider;
+import com.FindMyService.model.ServiceCatalog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
+    List<Feedback> findByServiceId(ServiceCatalog serviceId);
+    List<Feedback> findByProviderId(Provider providerId);
 }

@@ -1,6 +1,8 @@
 package com.FindMyService.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.time.Instant;
@@ -31,6 +33,11 @@ public class Feedback {
 
     @Lob
     private String comment;
+
+    @Column(nullable = false)
+    @Min(0)
+    @Max(5)
+    private Integer rating;
 
     private Instant createdAt = Instant.now();
 }

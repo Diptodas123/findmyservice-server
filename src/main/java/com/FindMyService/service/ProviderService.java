@@ -36,8 +36,6 @@ public class ProviderService {
     }
 
     public Optional<Provider> updateProvider(Long providerId, Provider provider) {
-        ownerCheck.verifyOwnerOrAdmin(providerId);
-
         Provider existingProvider = providerRepository.findById(providerId).orElse(null);
         if (existingProvider == null) {
             return Optional.empty();
@@ -51,8 +49,6 @@ public class ProviderService {
     }
 
     public boolean deleteProvider(Long providerId) {
-        ownerCheck.verifyOwnerOrAdmin(providerId);
-
         return providerRepository.findById(providerId).map(provider -> {
             providerRepository.delete(provider);
             return true;

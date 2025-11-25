@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import com.FindMyService.model.dto.UserDto;
 import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.OwnerCheck;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,11 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUser(@PathVariable Long userId) {
+        try {
+            ownerCheck.verifyOwner(userId);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return userService.getUserById(userId)
                 .map(DtoMapper::toDto)
                 .map(ResponseEntity::ok)
@@ -56,6 +62,11 @@ public class UserController {
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User user) {
+        try {
+            ownerCheck.verifyOwner(userId);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return userService.updateUser(userId, user)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -64,6 +75,11 @@ public class UserController {
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+        try {
+            ownerCheck.verifyOwner(userId);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (userId == null || userId <= 0) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid userId"));
         }

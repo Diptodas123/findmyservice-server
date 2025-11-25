@@ -37,8 +37,6 @@ public class UserService {
     }
 
     public Optional<User> updateUser(Long userId, User user) {
-        ownerCheck.verifyOwnerOrAdmin(userId, this::getUserById);
-
         User existingUser = userRepository.findById(userId).orElse(null);
         if (existingUser == null) {
             return Optional.empty();
@@ -52,8 +50,6 @@ public class UserService {
     }
 
     public boolean deleteUser(Long userId) {
-        ownerCheck.verifyOwnerOrAdmin(userId, this::getUserById);
-
         return userRepository.findById(userId).map(user -> {
             userRepository.delete(user);
             return true;

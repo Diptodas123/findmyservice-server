@@ -2,8 +2,8 @@ package com.FindMyService.controller;
 
 import com.FindMyService.model.Feedback;
 import com.FindMyService.service.FeedbackService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -18,23 +18,18 @@ public class FeedbackController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<Feedback>> getAllFeedbacks() {
         return ResponseEntity.ok(feedbackService.getAllFeedbacks());
     }
 
-    @GetMapping("/{feedbackId}")
-    public ResponseEntity<Feedback> getFeedback(@PathVariable Long feedbackId) {
-        return feedbackService.getFeedbackById(feedbackId)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    @GetMapping("/{orderId}")
+    public ResponseEntity<List<Feedback>> getAllFeedbacksForService(@PathVariable Long orderId) {
+        return ResponseEntity.ok(feedbackService.getAllFeedbacksForService(orderId));
     }
 
     @PostMapping
-    public ResponseEntity<Feedback> createFeedback(@RequestBody Feedback feedback) {
-        Feedback feedbackToCreate = feedbackService.createFeedback(feedback);
-        if(feedbackToCreate == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(feedbackToCreate);
+    public ResponseEntity<?> createFeedback(@RequestBody Feedback feedback) {
+        return feedbackService.createFeedback(feedback);
     }
 }

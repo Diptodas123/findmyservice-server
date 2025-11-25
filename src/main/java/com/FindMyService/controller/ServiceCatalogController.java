@@ -2,8 +2,11 @@ package com.FindMyService.controller;
 
 import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.service.ServiceCatalogService;
+import com.FindMyService.utils.OwnerCheck;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -12,8 +15,10 @@ import java.util.List;
 public class ServiceCatalogController {
 
     private final ServiceCatalogService serviceCatalogService;
+    private final OwnerCheck ownerCheck;
 
-    public ServiceCatalogController(ServiceCatalogService serviceCatalogService) {
+    public ServiceCatalogController(ServiceCatalogService serviceCatalogService, OwnerCheck ownerCheck) {
+        this.ownerCheck = ownerCheck;
         this.serviceCatalogService = serviceCatalogService;
     }
 
@@ -30,23 +35,37 @@ public class ServiceCatalogController {
     }
 
     @PostMapping
-    public ResponseEntity<ServiceCatalog> createService(@RequestBody ServiceCatalog service) {
-        ServiceCatalog newService = serviceCatalogService.createService(service);
-        if(newService == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
+    public ResponseEntity<?> createService(@RequestBody ServiceCatalog service) {
+        try {
+            ownerCheck.verifyOwner(service.getProviderId().getProviderId());
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(newService);
+        return serviceCatalogService.createService(service);
     }
 
     @PutMapping("/{serviceId}")
-    public ResponseEntity<ServiceCatalog> updateService(@PathVariable Long serviceId, @RequestBody ServiceCatalog service) {
-        return serviceCatalogService.updateService(serviceId, service)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
+    public ResponseEntity<?> updateService(@PathVariable Long serviceId, @RequestBody ServiceCatalog service) {
+        try {
+            ownerCheck.verifyOwner(service.getProviderId().getProviderId());
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return serviceCatalogService.updateService(serviceId, service);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
     public ResponseEntity<Void> deleteService(@PathVariable Long serviceId) {
+        ServiceCatalog service = serviceCatalogService.getServiceById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        try {
+            ownerCheck.verifyOwner(service.getProviderId().getProviderId());
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         boolean serviceToDelete = serviceCatalogService.deleteService(serviceId);
         if (serviceToDelete) {
             return ResponseEntity.noContent().build();

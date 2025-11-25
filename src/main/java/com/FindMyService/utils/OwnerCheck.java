@@ -1,63 +1,51 @@
 package com.FindMyService.utils;
 
-import com.FindMyService.repository.ProviderRepository;
+import com.FindMyService.security.JwtTokenUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.function.Function;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Component
 public class OwnerCheck {
 
-    private final ProviderRepository providerRepository;
+    private final JwtTokenUtil jwtTokenUtil;
 
-    public OwnerCheck(ProviderRepository providerRepository) {
-        this.providerRepository = providerRepository;
+    public OwnerCheck(JwtTokenUtil jwtTokenUtil) {
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
-    public void verifyOwnerOrAdmin(Long providerId) {
-        verifyOwnerOrAdmin(providerId, providerRepository::findById);
-    }
-
-    public boolean isOwnerOrAdmin(Long id, Function<Long, Optional<?>> finder) {
+    public void verifyOwner(Long resourceId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return false;
+        if (auth == null) {
+            throw new AccessDeniedException("Not authenticated");
+        }
 
-        String principal = auth.getName();
         boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority()) || "ADMIN".equalsIgnoreCase(a.getAuthority()));
-        if (isAdmin) return true;
+                .anyMatch(a -> "ROLE_ADMIN".equalsIgnoreCase(a.getAuthority()));
+        if (isAdmin) {
+            return;
+        }
 
-        if (id == null || principal == null) return false;
+        String token = extractTokenFromRequest();
+        String tokenId = jwtTokenUtil.extractUserId(token)
+                .orElseThrow(() -> new AccessDeniedException("Invalid token"));
 
-        return finder.apply(id)
-                .map(entity -> {
-                    String owner = extractOwnerIdentifier(entity);
-                    return owner != null && owner.equalsIgnoreCase(principal);
-                })
-                .orElse(false);
-    }
-
-    public void verifyOwnerOrAdmin(Long id, Function<Long, Optional<?>> finder) {
-        if (!isOwnerOrAdmin(id, finder)) {
-            throw new AccessDeniedException("Forbidden: not owner or admin");
+        if (!tokenId.equals(resourceId)) {
+            throw new AccessDeniedException("Forbidden: You can only access your own resources");
         }
     }
 
-    private String extractOwnerIdentifier(Object entity) {
-        String[] candidates = {"getOwnerEmail", "getOwner", "getOwnerUsername", "getEmail", "getUsername"};
-        for (String name : candidates) {
-            try {
-                Method m = entity.getClass().getMethod(name);
-                Object val = m.invoke(entity);
-                if (val != null) return val.toString();
-            } catch (ReflectiveOperationException ignored) {
-            }
+    private String extractTokenFromRequest() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
+                .currentRequestAttributes()).getRequest();
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
-        return null;
+        throw new AccessDeniedException("No token found");
     }
 }

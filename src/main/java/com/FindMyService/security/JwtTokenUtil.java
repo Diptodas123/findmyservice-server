@@ -82,4 +82,15 @@ public class JwtTokenUtil {
             return Optional.empty();
         }
     }
+
+    public Optional<String> extractUserId(String token) {
+        return parseClaims(token)
+                .map(claims -> claims.get("userId", String.class));
+    }
+
+    public Optional<String> extractRole(String token) {
+        return parseClaims(token)
+                .map(claims -> claims.get("role", String.class));
+    }
+
 }

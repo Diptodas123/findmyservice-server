@@ -58,7 +58,7 @@ public class ProviderController {
     @PreAuthorize("hasAuthority('PROVIDER') or hasAuthority('ADMIN')")
     public ResponseEntity<Provider> updateProvider(@PathVariable Long providerId, @RequestBody Provider provider) {
         try {
-            ownerCheck.verifyOwnerOrAdmin(providerId);
+            ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -72,7 +72,7 @@ public class ProviderController {
     @PreAuthorize("hasAuthority('PROVIDER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> deleteProvider(@PathVariable Long providerId) {
         try {
-            ownerCheck.verifyOwnerOrAdmin(providerId);
+            ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
