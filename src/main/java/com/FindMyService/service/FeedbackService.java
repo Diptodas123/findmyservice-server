@@ -68,31 +68,38 @@ public class FeedbackService {
         return feedbackRepository.findByServiceId(serviceCatalog);
     }
 
-    void updateRatings(Feedback feedback){
+    void updateRatings(Feedback feedback) {
         ServiceCatalog serviceCatalog = serviceCatalogRepository.findById(feedback.getServiceId().getServiceId())
                 .orElseThrow(() -> new RuntimeException("Service not found"));
         com.FindMyService.model.Provider provider = providerRepository.findById(serviceCatalog.getProviderId().getProviderId())
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
 
-        int newTotalProviderRatings = feedbackRepository.findByProviderId(serviceCatalog.getProviderId()).size();
-        int newTotalServiceRatings = feedbackRepository.findByServiceId(feedback.getServiceId()).size();
+        int totalServiceReviews = serviceCatalog.getTotalRatings();
+        int totalProviderReviews = provider.getTotalRatings();
+
+        int newTotalServiceReviews = totalServiceReviews + 1;
+        int newTotalProviderReviews = totalProviderReviews + 1;
 
         BigDecimal currentProviderRating = provider.getAvgRating() != null ? provider.getAvgRating() : BigDecimal.ZERO;
         BigDecimal updatedProviderRating = currentProviderRating
-                .multiply(BigDecimal.valueOf(newTotalProviderRatings - 1))
+                .multiply(BigDecimal.valueOf(totalProviderReviews))
                 .add(BigDecimal.valueOf(feedback.getRating()))
-                .divide(BigDecimal.valueOf(newTotalProviderRatings), 1, BigDecimal.ROUND_HALF_UP);
+                .divide(BigDecimal.valueOf(newTotalProviderReviews), 1, java.math.RoundingMode.HALF_UP);
 
         BigDecimal currentServiceRating = serviceCatalog.getAvgRating() != null ? serviceCatalog.getAvgRating() : BigDecimal.ZERO;
         BigDecimal updatedServiceRating = currentServiceRating
-                .multiply(BigDecimal.valueOf(newTotalServiceRatings - 1))
+                .multiply(BigDecimal.valueOf(totalServiceReviews))
                 .add(BigDecimal.valueOf(feedback.getRating()))
-                .divide(BigDecimal.valueOf(newTotalServiceRatings), 1, BigDecimal.ROUND_HALF_UP);
+                .divide(BigDecimal.valueOf(newTotalServiceReviews), 1, java.math.RoundingMode.HALF_UP);
 
         provider.setAvgRating(updatedProviderRating);
+        provider.setTotalRatings(newTotalProviderReviews);
+
         serviceCatalog.setAvgRating(updatedServiceRating);
+        serviceCatalog.setTotalRatings(newTotalServiceReviews);
 
         providerRepository.save(provider);
         serviceCatalogRepository.save(serviceCatalog);
     }
+
 }

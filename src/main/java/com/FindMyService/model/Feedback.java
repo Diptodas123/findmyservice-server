@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "feedback")
+@Table(name = "feedbacks")
 @Data
 @Builder
 @NoArgsConstructor

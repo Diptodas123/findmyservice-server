@@ -10,5 +10,4 @@ import java.util.List;
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findByServiceId(ServiceCatalog serviceId);
-    List<Feedback> findByProviderId(Provider providerId);
 }

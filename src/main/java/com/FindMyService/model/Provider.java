@@ -59,4 +59,5 @@ public class Provider {
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     private BigDecimal avgRating;
+    private int totalRatings;
 }
