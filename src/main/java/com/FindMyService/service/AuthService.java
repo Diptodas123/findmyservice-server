@@ -62,7 +62,7 @@ public class AuthService {
                     return Map.of("error", "Unable to register provider");
                 }
             }
-            case USER, ADMIN -> {
+            case USER -> {
                 if (userRepository.existsByEmail(request.getEmail())) {
                     return Map.of("error", "Email already registered");
                 }
@@ -71,7 +71,6 @@ public class AuthService {
                         .name(request.getName())
                         .email(request.getEmail())
                         .password(request.getPassword())
-                        .role(request.getRole())
                         .build();
 
                 User newUser = userService.createUser(user);
@@ -97,7 +96,7 @@ public class AuthService {
                 if (provider == null || !encoder.matches(request.getPassword(), provider.getPassword())) {
                     return Map.of("error", "Invalid email or password");
                 }
-                String token = jwtUtil.generateToken(provider.getProviderId().toString(), provider.getEmail(), Role.PROVIDER);
+                String token = jwtUtil.generateToken(provider.getProviderId().toString(), provider.getEmail(), request.getRole());
                 return Map.of("token", token);
             }
             case USER, ADMIN -> {
@@ -106,10 +105,7 @@ public class AuthService {
                 if (user == null || !encoder.matches(request.getPassword(), user.getPassword())) {
                     return Map.of("error", "Invalid email or password");
                 }
-                if(request.getRole() != user.getRole()) {
-                    return Map.of("error", "Invalid role for user");
-                }
-                String token = jwtUtil.generateToken(user.getUserId().toString(), user.getEmail(), user.getRole());
+                String token = jwtUtil.generateToken(user.getUserId().toString(), user.getEmail(), request.getRole());
                 return Map.of("token", token);
             }
             default -> {

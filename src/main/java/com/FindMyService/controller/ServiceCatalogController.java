@@ -9,6 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RequestMapping("/api/v1/services")
 @RestController
@@ -40,7 +41,12 @@ public class ServiceCatalogController {
         try {
             ownerCheck.verifyOwner(service.getProviderId().getProviderId());
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return serviceCatalogService.createService(service);
     }
@@ -51,20 +57,30 @@ public class ServiceCatalogController {
         try {
             ownerCheck.verifyOwner(service.getProviderId().getProviderId());
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return serviceCatalogService.updateService(serviceId, service);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
-    public ResponseEntity<Void> deleteService(@PathVariable Long serviceId) {
+    public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
         ServiceCatalog service = serviceCatalogService.getServiceById(serviceId)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
         try {
             ownerCheck.verifyOwner(service.getProviderId().getProviderId());
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         boolean serviceToDelete = serviceCatalogService.deleteService(serviceId);
         if (serviceToDelete) {

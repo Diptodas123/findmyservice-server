@@ -37,11 +37,16 @@ public class ProviderController {
     }
 
     @GetMapping("/{providerId}")
-    public ResponseEntity<ProviderDto> getProvider(@PathVariable Long providerId) {
+    public ResponseEntity<?> getProvider(@PathVariable Long providerId) {
         try {
             ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return providerService.getProviderById(providerId)
                 .map(DtoMapper::toDto)
@@ -61,11 +66,16 @@ public class ProviderController {
 
     @PutMapping("/{providerId}")
     @PreAuthorize("hasAuthority('PROVIDER') or hasAuthority('ADMIN')")
-    public ResponseEntity<Provider> updateProvider(@PathVariable Long providerId, @RequestBody Provider provider) {
+    public ResponseEntity<?> updateProvider(@PathVariable Long providerId, @RequestBody Provider provider) {
         try {
             ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
 
         return providerService.updateProvider(providerId, provider)
@@ -79,7 +89,12 @@ public class ProviderController {
         try {
             ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
 
         boolean deleted = providerService.deleteProvider(providerId);

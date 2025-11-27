@@ -37,11 +37,16 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long userId) {
+    public ResponseEntity<?> getUser(@PathVariable Long userId) {
         try {
             ownerCheck.verifyOwner(userId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return userService.getUserById(userId)
                 .map(DtoMapper::toDto)
@@ -61,11 +66,16 @@ public class UserController {
 
     @PutMapping("/{userId}")
     @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
-    public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User user) {
+    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody User user) {
         try {
             ownerCheck.verifyOwner(userId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return userService.updateUser(userId, user)
                 .map(ResponseEntity::ok)
@@ -78,7 +88,12 @@ public class UserController {
         try {
             ownerCheck.verifyOwner(userId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         if (userId == null || userId <= 0) {
             return ResponseEntity.badRequest().body(Map.of("message", "Invalid userId"));

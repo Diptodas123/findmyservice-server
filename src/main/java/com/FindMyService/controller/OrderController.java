@@ -42,7 +42,12 @@ public class OrderController {
         try {
             ownerCheck.verifyOwner(order.getUserId().getUserId());
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return orderService.createOrder(order);
     }
@@ -59,22 +64,32 @@ public class OrderController {
 
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER')")
-    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {
+    public ResponseEntity<?> getOrdersByUser(@PathVariable Long userId) {
         try {
             ownerCheck.verifyOwner(userId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
     }
 
     @GetMapping("/provider/{providerId}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
-    public ResponseEntity<List<Order>> getOrdersByProvider(@PathVariable Long providerId) {
+    public ResponseEntity<?> getOrdersByProvider(@PathVariable Long providerId) {
         try {
             ownerCheck.verifyOwner(providerId);
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return ResponseEntity.ok(orderService.getOrdersByProvider(providerId));
     }
@@ -100,7 +115,12 @@ public class OrderController {
         try {
             ownerCheck.verifyOwner(order.getProviderId().getProviderId());
         } catch (AccessDeniedException ex) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            Map<String, Object> errorBody = Map.of(
+                    "status", HttpStatus.FORBIDDEN.value(),
+                    "error", "Forbidden",
+                    "message", "You are not authorized to access these orders"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
         return orderService.updateOrderStatus(orderId, newStatus);
     }

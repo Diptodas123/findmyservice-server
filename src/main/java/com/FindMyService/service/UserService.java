@@ -16,11 +16,8 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     private final UserRepository userRepository;
-    private final OwnerCheck ownerCheck;
-
     public UserService(UserRepository userRepository, OwnerCheck ownerCheck) {
         this.userRepository = userRepository;
-        this.ownerCheck = ownerCheck;
     }
 
     public List<User> getAllUsers() {

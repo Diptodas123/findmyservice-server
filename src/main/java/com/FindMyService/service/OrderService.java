@@ -2,7 +2,6 @@ package com.FindMyService.service;
 
 import com.FindMyService.model.Order;
 import com.FindMyService.model.Provider;
-import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.User;
 import com.FindMyService.model.enums.OrderStatus;
 import com.FindMyService.repository.OrderRepository;

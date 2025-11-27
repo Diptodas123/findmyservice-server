@@ -15,11 +15,9 @@ public class ProviderService {
     private PasswordEncoder passwordEncoder;
 
     private final ProviderRepository providerRepository;
-    private final OwnerCheck ownerCheck;
 
     public ProviderService(ProviderRepository providerRepository, OwnerCheck ownerCheck) {
         this.providerRepository = providerRepository;
-        this.ownerCheck = ownerCheck;
     }
 
     public List<Provider> getAllProviders() {

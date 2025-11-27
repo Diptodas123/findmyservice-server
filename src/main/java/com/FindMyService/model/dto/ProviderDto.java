@@ -1,5 +1,6 @@
 package com.FindMyService.model.dto;
 
+import com.FindMyService.model.enums.Role;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -11,6 +12,7 @@ public class ProviderDto{
     private Long providerId;
     private String providerName;
     private String email;
+    private Role role;
     private String phone;
     private String addressLine1;
     private String addressLine2;
