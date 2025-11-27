@@ -31,6 +31,16 @@ public class ServiceCatalogService {
         return serviceCatalogRepository.findById(serviceId);
     }
 
+    public List<ServiceCatalog> getServicesByProvider(Long providerId) {
+        if (providerId == null || providerId <= 0) {
+            return List.of();
+        }
+        if (!providerRepository.existsById(providerId)) {
+            return List.of();
+        }
+        return serviceCatalogRepository.findByProviderId(providerId);
+    }
+
     @Transactional
     public ServiceCatalogDto createService(ServiceCatalogDto serviceDto) {
         Provider provider = providerRepository.findById(serviceDto.getProviderId())
