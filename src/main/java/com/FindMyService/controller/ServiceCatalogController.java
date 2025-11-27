@@ -36,6 +36,21 @@ public class ServiceCatalogController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    @GetMapping("/provider/{providerId}")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
+    public ResponseEntity<?> getServicesByProvider(@PathVariable Long providerId) {
+        try {
+            ownerCheck.verifyOwner(providerId);
+        } catch (AccessDeniedException ex) {
+            Map<String, Object> errorBody = ErrorResponseBuilder.forbidden(
+                    "You are not authorized to access services for this provider"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
+        }
+        List<ServiceCatalog> services = serviceCatalogService.getServicesByProvider(providerId);
+        return ResponseEntity.ok(services);
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
     public ResponseEntity<?> createService(@RequestBody ServiceCatalog service) {
@@ -64,7 +79,7 @@ public class ServiceCatalogController {
         return serviceCatalogService.updateService(serviceId, service);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{serviceId}")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
     public ResponseEntity<?> deleteService(@PathVariable Long serviceId) {
         ServiceCatalog service = serviceCatalogService.getServiceById(serviceId)
@@ -77,10 +92,6 @@ public class ServiceCatalogController {
             );
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
         }
-        boolean serviceToDelete = serviceCatalogService.deleteService(serviceId);
-        if (serviceToDelete) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return serviceCatalogService.deleteService(serviceId);
     }
 }

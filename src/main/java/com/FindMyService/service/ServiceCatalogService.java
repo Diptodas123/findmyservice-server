@@ -29,12 +29,38 @@ public class ServiceCatalogService {
     }
 
     public Optional<ServiceCatalog> getServiceById(Long serviceId) {
+        if (serviceId == null || serviceId <= 0) {
+            return Optional.empty();
+        }
         return serviceCatalogRepository.findById(serviceId);
+    }
+
+    public List<ServiceCatalog> getServicesByProvider(Long providerId) {
+        if (providerId == null || providerId <= 0) {
+            return List.of();
+        }
+        if (!providerRepository.existsById(providerId)) {
+            return List.of();
+        }
+        return serviceCatalogRepository.findByProviderId(providerId);
     }
 
     @Transactional
     public ResponseEntity<?> createService(ServiceCatalog service) {
-        Optional<Provider> provider = providerRepository.findById(service.getProviderId().getProviderId());
+        if (service == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Service data must be provided"));
+        }
+
+        if (service.getProviderId() == null || service.getProviderId().getProviderId() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Provider id must be provided in payload"));
+        }
+
+        Long payloadProviderId = service.getProviderId().getProviderId();
+        Optional<Provider> provider = providerRepository.findById(payloadProviderId);
         if (provider.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -42,6 +68,7 @@ public class ServiceCatalogService {
         }
 
         try {
+            service.setProviderId(provider.get());
             ServiceCatalog saved = serviceCatalogRepository.save(service);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         } catch (Exception e) {
@@ -53,6 +80,12 @@ public class ServiceCatalogService {
 
     @Transactional
     public ResponseEntity<?> updateService(Long serviceId, ServiceCatalog service) {
+        if (serviceId == null || serviceId <= 0) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Invalid service id"));
+        }
+
         Optional<ServiceCatalog> existingService = serviceCatalogRepository.findById(serviceId);
         if (existingService.isEmpty()) {
             return ResponseEntity
@@ -60,7 +93,20 @@ public class ServiceCatalogService {
                     .body(ErrorResponseBuilder.build(HttpStatus.NOT_FOUND, "Service not found"));
         }
 
-        Optional<Provider> provider = providerRepository.findById(service.getProviderId().getProviderId());
+        if (service == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Service data must be provided"));
+        }
+
+        if (service.getProviderId() == null || service.getProviderId().getProviderId() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Provider id must be provided in payload"));
+        }
+
+        Long payloadProviderId = service.getProviderId().getProviderId();
+        Optional<Provider> provider = providerRepository.findById(payloadProviderId);
         if (provider.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -69,6 +115,7 @@ public class ServiceCatalogService {
 
         try {
             service.setServiceId(serviceId);
+            service.setProviderId(provider.get());
             ServiceCatalog updatedService = serviceCatalogRepository.save(service);
             return ResponseEntity.ok(updatedService);
         } catch (Exception e) {
@@ -79,10 +126,27 @@ public class ServiceCatalogService {
     }
 
     @Transactional
-    public boolean deleteService(Long serviceId) {
-        return serviceCatalogRepository.findById(serviceId).map(service -> {
-            serviceCatalogRepository.delete(service);
-            return true;
-        }).orElse(false);
+    public ResponseEntity<?> deleteService(Long serviceId) {
+        if (serviceId == null || serviceId <= 0) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponseBuilder.build(HttpStatus.BAD_REQUEST, "Invalid service id"));
+        }
+
+        Optional<ServiceCatalog> service = serviceCatalogRepository.findById(serviceId);
+        if (service.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponseBuilder.build(HttpStatus.NOT_FOUND, "Service not found"));
+        }
+
+        try {
+            serviceCatalogRepository.delete(service.get());
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ErrorResponseBuilder.serverError("Failed to delete service: " + e.getMessage()));
+        }
     }
 }
