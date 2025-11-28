@@ -125,7 +125,7 @@ public class AuthService {
                             .body(ErrorResponseBuilder.unauthorized("Invalid email or password"));
                 }
                 String token = jwtUtil.generateToken(provider.getProviderId().toString(), provider.getEmail(), request.getRole());
-                return ResponseEntity.ok(Map.of("token", token));
+                return ResponseEntity.ok(Map.of("token", token, "providerId", provider.getProviderId()));
             }
             case USER, ADMIN -> {
                 User user = userRepository.findByEmail(request.getEmail()).orElse(null);
@@ -141,7 +141,7 @@ public class AuthService {
                             .body(ErrorResponseBuilder.forbidden("Invalid role for user"));
                 }
                 String token = jwtUtil.generateToken(user.getUserId().toString(), user.getEmail(), user.getRole());
-                return ResponseEntity.ok(Map.of("token", token));
+                return ResponseEntity.ok(Map.of("token", token, "userId", user.getUserId()));
             }
             default -> {
                 return ResponseEntity
