@@ -44,6 +44,23 @@ public class ServiceCatalogController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+    @GetMapping("/provider/{providerId}")
+    public ResponseEntity<?> getServicesByProvider(@PathVariable Long providerId) {
+        try {
+            ownerCheck.verifyOwner(providerId);
+            List<ServiceCatalog> services = serviceCatalogService.getServicesByProvider(providerId);
+            List<ServiceCatalogDto> serviceDtos = services.stream()
+                    .map(DtoMapper::toDto)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(serviceDtos);
+        } catch (AccessDeniedException ex) {
+            Map<String, Object> errorBody = ResponseBuilder.forbidden(
+                    "You are not authorized to access services for this provider"
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBody);
+        }
+    }
+
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PROVIDER')")
     public ResponseEntity<?> createService(@RequestBody ServiceCatalogDto serviceDto) {
