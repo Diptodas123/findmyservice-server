@@ -39,13 +39,6 @@ public class ProviderController {
 
     @GetMapping("/{providerId}")
     public ResponseEntity<?> getProvider(@PathVariable Long providerId, HttpServletRequest request) {
-        try {
-            ownerCheck.verifyOwner(providerId);
-        } catch (AccessDeniedException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(ResponseBuilder.forbidden("You are not authorized to access this provider"));
-        }
         return providerService.getProviderById(providerId)
                 .map(DtoMapper::toDto)
                 .map(dto -> ResponseEntity.ok((Object) dto))
