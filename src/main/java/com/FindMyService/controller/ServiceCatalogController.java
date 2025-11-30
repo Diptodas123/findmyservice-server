@@ -47,7 +47,6 @@ public class ServiceCatalogController {
     @GetMapping("/provider/{providerId}")
     public ResponseEntity<?> getServicesByProvider(@PathVariable Long providerId) {
         try {
-            ownerCheck.verifyOwner(providerId);
             List<ServiceCatalog> services = serviceCatalogService.getServicesByProvider(providerId);
             List<ServiceCatalogDto> serviceDtos = services.stream()
                     .map(DtoMapper::toDto)
