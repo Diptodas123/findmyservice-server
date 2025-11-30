@@ -72,6 +72,7 @@ public class ProviderService {
         updateIfNotNull(providerDto.getCity(), existingProvider::setCity);
         updateIfNotNull(providerDto.getState(), existingProvider::setState);
         updateIfNotNull(providerDto.getZipCode(), existingProvider::setZipCode);
+        updateIfNotNull(providerDto.getProfilePictureUrl(), existingProvider::setProfilePictureUrl);
 
         if (providerDto.getPassword() != null && !providerDto.getPassword().isEmpty()) {
             if (providerDto.getCurrentPassword() == null || providerDto.getCurrentPassword().isEmpty()) {

@@ -1,6 +1,5 @@
 package com.FindMyService.model.dto;
 
-import com.FindMyService.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.math.BigDecimal;
@@ -22,7 +21,6 @@ public class ProviderDto{
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-    private Role role;
     private String phone;
     private String addressLine1;
     private String addressLine2;

@@ -6,7 +6,6 @@ import com.FindMyService.model.Provider;
 import com.FindMyService.model.dto.ProviderDto;
 import com.FindMyService.model.dto.ServiceCatalogDto;
 import com.FindMyService.model.dto.UserDto;
-import com.FindMyService.model.enums.Role;
 
 public final class DtoMapper {
 
@@ -36,7 +35,6 @@ public final class DtoMapper {
                 .providerId(provider.getProviderId())
                 .providerName(provider.getProviderName())
                 .email(provider.getEmail())
-                .role(Role.PROVIDER)
                 .phone(provider.getPhone())
                 .addressLine1(provider.getAddressLine1())
                 .addressLine2(provider.getAddressLine2())
@@ -44,7 +42,10 @@ public final class DtoMapper {
                 .city(provider.getCity())
                 .zipCode(provider.getZipCode())
                 .createdAt(provider.getCreatedAt())
+                .profilePictureUrl(provider.getProfilePictureUrl())
+                .imageUrls(provider.getImageUrls())
                 .avgRating(provider.getAvgRating())
+                .totalRatings(provider.getTotalRatings())
                 .build();
     }
 
