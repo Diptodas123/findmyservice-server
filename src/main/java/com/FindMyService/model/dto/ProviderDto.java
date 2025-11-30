@@ -16,7 +16,7 @@ public class ProviderDto{
     private String providerName;
     private String email;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)  // Only accept in requests, never return in responses
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     private Role role;

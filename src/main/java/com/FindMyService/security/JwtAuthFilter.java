@@ -79,7 +79,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             try {
-                // Parse JWT to extract claims (including role)
                 Claims claims = Jwts.parserBuilder()
                         .setSigningKey(secretKey)
                         .build()
