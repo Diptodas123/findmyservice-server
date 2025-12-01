@@ -45,6 +45,8 @@ public class Provider {
     @NotBlank(message = "Password is required")
     private String password;
 
+    private String profilePictureUrl;
+
     @ElementCollection
     @Column(name = "image_url")
     private List<String> imageUrls;

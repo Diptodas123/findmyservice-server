@@ -77,6 +77,14 @@ public class UserService {
         updateIfNotNull(userDto.getProfilePictureUrl(), existingUser::setProfilePictureUrl);
 
         if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
+            if (userDto.getCurrentPassword() == null || userDto.getCurrentPassword().isEmpty()) {
+                throw new IllegalArgumentException("Current password is required to update password");
+            }
+
+            if (!passwordEncoder.matches(userDto.getCurrentPassword(), existingUser.getPassword())) {
+                throw new IllegalArgumentException("Current password is incorrect");
+            }
+
             existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         }
 

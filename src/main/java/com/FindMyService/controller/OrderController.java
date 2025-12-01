@@ -1,7 +1,7 @@
 package com.FindMyService.controller;
 
 import com.FindMyService.model.Order;
-import com.FindMyService.model.enums.OrderStatus;
+import com.FindMyService.model.dto.OrderDto;
 import com.FindMyService.service.OrderService;
 import com.FindMyService.utils.ResponseBuilder;
 import com.FindMyService.utils.OwnerCheck;
@@ -11,7 +11,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Map;
 
 @RequestMapping("/api/v1/orders")
 @RestController
@@ -40,17 +39,41 @@ public class OrderController {
                         .body(ResponseBuilder.build(HttpStatus.NOT_FOUND, "Order not found")));
     }
 
-    @PostMapping
+    @PostMapping("/checkout")
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
-    public ResponseEntity<?> createOrder(@RequestBody Order order) {
+    public ResponseEntity<?> checkout(@RequestBody java.util.List<OrderDto> orderDtos) {
         try {
-            ownerCheck.verifyOwner(order.getUserId().getUserId());
+            if (orderDtos == null || orderDtos.isEmpty()) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ResponseBuilder.badRequest("Order list cannot be empty"));
+            }
+
+            Long userId = orderDtos.getFirst().getUserId();
+            ownerCheck.verifyOwner(userId);
+
+            boolean allSameUser = orderDtos.stream().allMatch(dto -> dto.getUserId().equals(userId));
+            if (!allSameUser) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(ResponseBuilder.badRequest("All orders must belong to the same user"));
+            }
+
+            java.util.List<OrderDto> createdOrders = orderService.createOrdersBatch(orderDtos);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdOrders);
         } catch (AccessDeniedException ex) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body(ResponseBuilder.forbidden("You are not authorized to create this order"));
+                    .body(ResponseBuilder.forbidden("You are not authorized to create these orders"));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseBuilder.badRequest(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBuilder.internalServerError("Failed to create orders: " + ex.getMessage()));
         }
-        return orderService.createOrder(order);
     }
 
     @DeleteMapping("/{orderId}")
@@ -91,35 +114,24 @@ public class OrderController {
         return orderService.getOrdersByProvider(providerId);
     }
 
-    @PostMapping("/{orderId}/payment/initiate")
-    @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<?> initiatePayment(@PathVariable Long orderId) {
-        return orderService.initiatePayment(orderId);
-    }
-
-    @PostMapping("/{orderId}/payment/confirm")
-    @PreAuthorize("hasAuthority('USER')")
-    public ResponseEntity<?> confirmPayment(
-            @PathVariable Long orderId,
-            @RequestBody Map<String, String> payload) {
-        return orderService.confirmPayment(orderId, payload.get("paymentIntentId"));
-    }
-
-    @PutMapping("/{orderId}/status")
-    public ResponseEntity<?> updateOrderStatus(@PathVariable Long orderId, @RequestBody OrderStatus newStatus) {
-        return orderService.getOrderById(orderId)
-                .map(order -> {
-                    try {
-                        ownerCheck.verifyOwner(order.getProviderId().getProviderId());
-                        return orderService.updateOrderStatus(orderId, newStatus);
-                    } catch (AccessDeniedException ex) {
-                        return ResponseEntity
-                                .status(HttpStatus.FORBIDDEN)
-                                .body(ResponseBuilder.forbidden("You are not authorized to update this order"));
-                    }
-                })
-                .orElseGet(() -> ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(ResponseBuilder.build(HttpStatus.NOT_FOUND, "Order not found")));
+    @PatchMapping("/{orderId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updateOrder(@PathVariable Long orderId, @RequestBody OrderDto orderDto) {
+        try {
+            OrderDto updatedOrder = orderService.updateOrder(orderId, orderDto);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (AccessDeniedException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(ResponseBuilder.forbidden(ex.getMessage()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ResponseBuilder.badRequest(ex.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ResponseBuilder.internalServerError("Failed to update order: " + ex.getMessage()));
+        }
     }
 }
