@@ -1,8 +1,10 @@
 package com.FindMyService.utils;
 
+import com.FindMyService.model.Order;
 import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.User;
 import com.FindMyService.model.Provider;
+import com.FindMyService.model.dto.OrderDto;
 import com.FindMyService.model.dto.ProviderDto;
 import com.FindMyService.model.dto.ServiceCatalogDto;
 import com.FindMyService.model.dto.UserDto;
@@ -81,6 +83,23 @@ public final class DtoMapper {
                 .warrantyPeriodMonths(dto.getWarrantyPeriodMonths())
                 .imageUrl(dto.getImageUrl())
                 .active(dto.getActive() != null ? dto.getActive() : true)
+                .build();
+    }
+
+    public static OrderDto toDto(Order order) {
+        if (order == null) return null;
+        return com.FindMyService.model.dto.OrderDto.builder()
+                .orderId(order.getOrderId())
+                .userId(order.getUserId() != null ? order.getUserId().getUserId() : null)
+                .providerId(order.getProviderId() != null ? order.getProviderId().getProviderId() : null)
+                .serviceId(order.getServiceId() != null ? order.getServiceId().getServiceId() : null)
+                .orderStatus(order.getOrderStatus())
+                .totalCost(order.getTotalCost())
+                .quantity(order.getQuantity())
+                .requestedDate(order.getRequestedDate())
+                .scheduledDate(order.getScheduledDate())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
                 .build();
     }
 }

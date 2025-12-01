@@ -1,6 +1,7 @@
 package com.FindMyService.controller;
 
 import com.FindMyService.model.Feedback;
+import com.FindMyService.model.dto.FeedbackDto;
 import com.FindMyService.service.FeedbackService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +30,8 @@ public class FeedbackController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createFeedback(@RequestBody Feedback feedback) {
-        return feedbackService.createFeedback(feedback);
+    @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
+    public ResponseEntity<?> createFeedback(@RequestBody FeedbackDto feedbackDto) {
+        return feedbackService.createFeedback(feedbackDto);
     }
 }

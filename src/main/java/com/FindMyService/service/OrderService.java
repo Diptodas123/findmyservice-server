@@ -2,22 +2,28 @@ package com.FindMyService.service;
 
 import com.FindMyService.model.Order;
 import com.FindMyService.model.Provider;
+import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.User;
+import com.FindMyService.model.dto.OrderDto;
 import com.FindMyService.model.enums.OrderStatus;
 import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
 import com.FindMyService.repository.UserRepository;
+import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.ResponseBuilder;
-import com.stripe.model.PaymentIntent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import static com.FindMyService.model.enums.OrderStatus.PAID;
+import java.util.function.Consumer;
+
 import static com.FindMyService.model.enums.OrderStatus.REQUESTED;
 
 @Service
@@ -26,16 +32,19 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProviderRepository providerRepository;
-    private final PaymentService paymentService;
+    private final com.FindMyService.repository.ServiceCatalogRepository serviceCatalogRepository;
+    private final com.FindMyService.utils.OwnerCheck ownerCheck;
 
     public OrderService(OrderRepository orderRepository,
                         UserRepository userRepository,
                         ProviderRepository providerRepository,
-                        PaymentService paymentService) {
+                        com.FindMyService.repository.ServiceCatalogRepository serviceCatalogRepository,
+                        com.FindMyService.utils.OwnerCheck ownerCheck) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.providerRepository = providerRepository;
-        this.paymentService = paymentService;
+        this.serviceCatalogRepository = serviceCatalogRepository;
+        this.ownerCheck = ownerCheck;
     }
 
     public List<Order> getAllOrders() {
@@ -47,25 +56,39 @@ public class OrderService {
     }
 
     @Transactional
-    public ResponseEntity<?> createOrder(Order order) {
-        Optional<User> user = userRepository.findById(order.getUserId().getUserId());
-        if (user.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseBuilder.build(HttpStatus.BAD_REQUEST, "User from payload not found"));
-        }
+    public OrderDto createOrder(OrderDto orderDto) {
+        User user = userRepository.findById(orderDto.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + orderDto.getUserId()));
 
-        Optional<Provider> provider = providerRepository.findById(order.getProviderId().getProviderId());
-        if (provider.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseBuilder.build(HttpStatus.BAD_REQUEST, "Provider from payload not found"));
-        }
+        Provider provider = providerRepository.findById(orderDto.getProviderId())
+                .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + orderDto.getProviderId()));
+        ServiceCatalog service = serviceCatalogRepository.findById(orderDto.getServiceId())
+                .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + orderDto.getServiceId()));
 
-        order.setOrderStatus(REQUESTED);
+        Order order = Order.builder()
+                .userId(user)
+                .providerId(provider)
+                .serviceId(service)
+                .orderStatus(REQUESTED)
+                .totalCost(orderDto.getTotalCost() != null ? orderDto.getTotalCost() : service.getCost())
+                .quantity(orderDto.getQuantity() != null ? orderDto.getQuantity() : 1)
+                .requestedDate(orderDto.getRequestedDate())
+                .build();
 
         Order saved = orderRepository.save(order);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        return DtoMapper.toDto(saved);
+    }
+
+    @Transactional
+    public List<OrderDto> createOrdersBatch(List<OrderDto> orderDtos) {
+        List<OrderDto> createdOrders = new ArrayList<>();
+
+        for (OrderDto orderDto : orderDtos) {
+            OrderDto createdOrder = createOrder(orderDto);
+            createdOrders.add(createdOrder);
+        }
+
+        return createdOrders;
     }
 
     @Transactional
@@ -85,7 +108,10 @@ public class OrderService {
         }
 
         List<Order> orders = orderRepository.findByUserId(user.get());
-        return ResponseEntity.ok(orders);
+        List<OrderDto> orderDtos = orders.stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return ResponseEntity.ok(orderDtos);
     }
 
     public ResponseEntity<?> getOrdersByProvider(Long providerId) {
@@ -97,101 +123,89 @@ public class OrderService {
         }
 
         List<Order> orders = orderRepository.findByProviderId(provider.get());
-        return ResponseEntity.ok(orders);
+        List<OrderDto> orderDtos = orders.stream()
+                .map(DtoMapper::toDto)
+                .toList();
+        return ResponseEntity.ok(orderDtos);
     }
 
     @Transactional
-    public ResponseEntity<?> initiatePayment(Long orderId) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        if (order.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ResponseBuilder.build(HttpStatus.NOT_FOUND, "Order not found"));
+    public OrderDto updateOrder(Long orderId, OrderDto orderDto) {
+        Order existingOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
+
+        Authentication auth =
+            SecurityContextHolder.getContext().getAuthentication();
+
+        String userRole = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority.equals("USER") || authority.equals("PROVIDER") || authority.equals("ADMIN"))
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("Invalid user role"));
+
+        if ("USER".equals(userRole)) {
+            ownerCheck.verifyOwner(existingOrder.getUserId().getUserId());
+        } else if ("PROVIDER".equals(userRole)) {
+            ownerCheck.verifyOwner(existingOrder.getProviderId().getProviderId());
         }
 
-        Order existing = order.get();
-
-        if (existing.getOrderStatus() == OrderStatus.COMPLETED ||
-                existing.getOrderStatus() == OrderStatus.CANCELLED ||
-                existing.getOrderStatus() == OrderStatus.PAID) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseBuilder.build(HttpStatus.BAD_REQUEST, "Cannot initiate payment for this order"));
-        }
-
-        try {
-            double priceInRupees = Math.round(existing.getTotalCost().doubleValue() * 100.0) / 100.0;
-
-            Long amountInPaise = (long) (priceInRupees * 100);
-
-            Map<String, String> paymentIntent = paymentService.createPaymentIntent(amountInPaise, orderId);
-
-            existing.setStripePaymentIntentId(paymentIntent.get("paymentIntentId"));
-            orderRepository.save(existing);
-
-            return ResponseEntity.ok(Map.of(
-                    "clientSecret", paymentIntent.get("clientSecret"),
-                    "amountInRupees", priceInRupees,
-                    "amountInPaise", amountInPaise,
-                    "currency", "INR"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseBuilder.serverError("Payment initiation failed: " + e.getMessage()));
-        }
-    }
-
-    @Transactional
-    public ResponseEntity<?> confirmPayment(Long orderId, String paymentIntentId) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        if (order.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ResponseBuilder.build(HttpStatus.NOT_FOUND, "Order not found"));
-        }
-
-        Order existing = order.get();
-
-        try {
-            PaymentIntent paymentIntent = paymentService.confirmPayment(paymentIntentId);
-
-            if ("succeeded".equals(paymentIntent.getStatus())) {
-                existing.setOrderStatus(PAID);
-                existing.setPaymentDate(Instant.now());
-                Order updated = orderRepository.save(existing);
-                return ResponseEntity.ok(updated);
-            } else {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(ResponseBuilder.build(HttpStatus.BAD_REQUEST,
-                                "Payment not successful. Status: " + paymentIntent.getStatus()));
+        if ("USER".equals(userRole)) {
+            if (orderDto.getScheduledDate() != null) {
+                throw new IllegalArgumentException("Users cannot modify scheduledDate");
             }
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseBuilder.serverError("Payment confirmation failed: " + e.getMessage()));
+            if (orderDto.getQuantity() != null) {
+                throw new IllegalArgumentException("Users cannot modify quantity");
+            }
+            if (orderDto.getTotalCost() != null) {
+                throw new IllegalArgumentException("Users cannot modify totalCost");
+            }
+
+            updateIfNotNull(orderDto.getRequestedDate(), existingOrder::setRequestedDate);
+
+            if (orderDto.getOrderStatus() != null) {
+                if (orderDto.getOrderStatus() == OrderStatus.CANCELLED) {
+                    existingOrder.setOrderStatus(OrderStatus.CANCELLED);
+                } else {
+                    throw new IllegalArgumentException("Users can only cancel orders");
+                }
+            }
+        } else if ("PROVIDER".equals(userRole)) {
+            if (orderDto.getRequestedDate() != null) {
+                throw new IllegalArgumentException("Providers cannot modify requestedDate");
+            }
+            if (orderDto.getQuantity() != null) {
+                throw new IllegalArgumentException("Providers cannot modify quantity");
+            }
+            if (orderDto.getTotalCost() != null) {
+                throw new IllegalArgumentException("Providers cannot modify totalCost");
+            }
+
+            updateIfNotNull(orderDto.getScheduledDate(), existingOrder::setScheduledDate);
+
+            if (orderDto.getOrderStatus() != null) {
+                if (orderDto.getOrderStatus() == OrderStatus.SCHEDULED ||
+                    orderDto.getOrderStatus() == OrderStatus.COMPLETED ||
+                    orderDto.getOrderStatus() == OrderStatus.CANCELLED) {
+                    existingOrder.setOrderStatus(orderDto.getOrderStatus());
+                } else {
+                    throw new IllegalArgumentException("Providers can only set status to SCHEDULED, COMPLETED, or CANCELLED");
+                }
+            }
+        } else if ("ADMIN".equals(userRole)) {
+            updateIfNotNull(orderDto.getRequestedDate(), existingOrder::setRequestedDate);
+            updateIfNotNull(orderDto.getScheduledDate(), existingOrder::setScheduledDate);
+            updateIfNotNull(orderDto.getQuantity(), existingOrder::setQuantity);
+            updateIfNotNull(orderDto.getOrderStatus(), existingOrder::setOrderStatus);
+            updateIfNotNull(orderDto.getTotalCost(), existingOrder::setTotalCost);
         }
+
+        Order updated = orderRepository.save(existingOrder);
+        return com.FindMyService.utils.DtoMapper.toDto(updated);
     }
 
-    @Transactional
-    public ResponseEntity<?> updateOrderStatus(Long orderId, OrderStatus newStatus) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        if (order.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(ResponseBuilder.build(HttpStatus.NOT_FOUND, "Order not found"));
+    private <T> void updateIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
-
-        if (newStatus == null) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(ResponseBuilder.build(HttpStatus.BAD_REQUEST, "Status cannot be null"));
-        }
-
-        Order existing = order.get();
-        existing.setOrderStatus(newStatus);
-        Order updated = orderRepository.save(existing);
-        return ResponseEntity.ok(updated);
     }
 }

@@ -29,8 +29,7 @@ public class SecurityConfig {
             "/api/v1/auth/**",
             "/api/v1/services/**",
             "/api/v1/providers/**",
-            "/api/v1/feedbacks/**",
-            "/api/v1/checkout/**"
+            "/api/v1/feedbacks/**"
     };
     private static final String[] SWAGGER_ENDPOINTS = {
             "/swagger-ui/**",
