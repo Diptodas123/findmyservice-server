@@ -38,13 +38,6 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUser(@PathVariable Long userId) {
-        try {
-            ownerCheck.verifyOwner(userId);
-        } catch (AccessDeniedException ex) {
-            return ResponseEntity
-                    .status(HttpStatus.FORBIDDEN)
-                    .body(ResponseBuilder.forbidden("You are not authorized to access this user"));
-        }
         return userService.getUserById(userId)
                 .map(DtoMapper::toDto)
                 .map(dto -> ResponseEntity.ok((Object) dto))

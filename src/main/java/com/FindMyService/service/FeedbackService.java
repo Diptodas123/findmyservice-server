@@ -108,6 +108,29 @@ public class FeedbackService {
         return ResponseEntity.ok(feedbackDtos);
     }
 
+    @Transactional
+    public ResponseEntity<?> getAllFeedbacksForProvider(Long providerId) {
+        List<ServiceCatalog> services = serviceCatalogRepository.findByProviderId_ProviderId(providerId);
+        if (services.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ResponseBuilder.notFound("No services found for provider"));
+        }
+        List<Feedback> feedbacks = feedbackRepository.findAll().stream()
+            .filter(fb -> services.contains(fb.getServiceId()))
+            .toList();
+        List<FeedbackDto> feedbackDtos = feedbacks.stream()
+            .map(feedback -> FeedbackDto.builder()
+                .feedbackId(feedback.getFeedbackId())
+                .serviceId(feedback.getServiceId().getServiceId())
+                .userId(feedback.getUserId().getUserId())
+                .comment(feedback.getComment())
+                .rating(feedback.getRating())
+                .createdAt(feedback.getCreatedAt())
+                .build())
+            .toList();
+        return ResponseEntity.ok(feedbackDtos);
+    }
+
     void updateRatings(Feedback feedback) {
         ServiceCatalog serviceCatalog = serviceCatalogRepository.findById(feedback.getServiceId().getServiceId())
                 .orElseThrow(() -> new RuntimeException("Service not found"));

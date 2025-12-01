@@ -24,7 +24,7 @@ public class FeedbackController {
         return ResponseEntity.ok(feedbackService.getAllFeedbacks());
     }
 
-    @GetMapping("/{serviceId}")
+    @GetMapping("/service/{serviceId}")
     public ResponseEntity<?> getAllFeedbacksForService(@PathVariable Long serviceId) {
         return feedbackService.getAllFeedbacksForService(serviceId);
     }
@@ -33,5 +33,10 @@ public class FeedbackController {
     @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
     public ResponseEntity<?> createFeedback(@RequestBody FeedbackDto feedbackDto) {
         return feedbackService.createFeedback(feedbackDto);
+    }
+
+    @GetMapping("/provider/{providerId}")
+    public ResponseEntity<?> getAllFeedbacksForProvider(@PathVariable Long providerId) {
+        return feedbackService.getAllFeedbacksForProvider(providerId);
     }
 }
