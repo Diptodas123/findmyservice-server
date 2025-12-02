@@ -28,7 +28,6 @@ public class ProviderController {
     }
 
     @GetMapping
-//    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<ProviderDto>> getAllProviders() {
         List<ProviderDto> dtos = providerService.getAllProviders()
                 .stream()
