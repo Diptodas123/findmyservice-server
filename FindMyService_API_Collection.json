@@ -1,0 +1,745 @@
+{
+  "info": {
+    "name": "FindMyService API Collection",
+    "description": "Complete API collection for FindMyService application",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\",\n  \"phone\": \"1234567890\",\n  \"addressLine1\": \"123 Main St\",\n  \"addressLine2\": \"Apt 4B\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"zipCode\": \"10001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerName\": \"ABC Services\",\n  \"email\": \"provider@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"PROVIDER\",\n  \"phone\": \"9876543210\",\n  \"addressLine1\": \"456 Business Ave\",\n  \"addressLine2\": \"Suite 200\",\n  \"city\": \"Los Angeles\",\n  \"state\": \"CA\",\n  \"zipCode\": \"90001\",\n  \"verified\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "console.log(\"JWT Token: \" + jsonData.token);",
+                  "// Copy the token from response and paste in Authorization header of other requests"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE",
+                "description": "Replace YOUR_JWT_TOKEN_HERE with actual JWT token from login"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/180001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "180001"]
+            }
+          }
+        },
+        {
+          "name": "Create User (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\",\n  \"phone\": \"5551234567\",\n  \"addressLine1\": \"789 Oak St\",\n  \"city\": \"Chicago\",\n  \"state\": \"IL\",\n  \"zipCode\": \"60601\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"9999999999\",\n  \"city\": \"Boston\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/180001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "180001"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/180001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "180001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Providers",
+      "item": [
+        {
+          "name": "Get All Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "providers"]
+            }
+          }
+        },
+        {
+          "name": "Get Provider By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "providers", "30001"]
+            }
+          }
+        },
+        {
+          "name": "Create Provider (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerName\": \"XYZ Services\",\n  \"email\": \"xyz@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"8888888888\",\n  \"addressLine1\": \"999 Provider Lane\",\n  \"city\": \"Miami\",\n  \"state\": \"FL\",\n  \"zipCode\": \"33101\",\n  \"verified\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "providers"]
+            }
+          }
+        },
+        {
+          "name": "Update Provider",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerName\": \"ABC Updated Services\",\n  \"phone\": \"7777777777\",\n  \"verified\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "providers", "30001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Provider",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "providers", "30001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "Get All Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services"]
+            }
+          }
+        },
+        {
+          "name": "Get Service By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/13",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "13"]
+            }
+          }
+        },
+        {
+          "name": "Get Services By Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/provider/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "provider", "30001"]
+            }
+          }
+        },
+        {
+          "name": "Create Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"providerId\": 30001,\n  \"serviceName\": \"Home Cleaning Service\",\n  \"description\": \"Professional home cleaning service with experienced staff\",\n  \"cost\": 499.99,\n  \"location\": \"New York, NY\",\n  \"availability\": \"AVAILABLE\",\n  \"warrantyPeriodMonths\": 3,\n  \"imageUrl\": \"https://example.com/images/cleaning.jpg\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services"]
+            }
+          }
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceName\": \"Premium Home Cleaning\",\n  \"cost\": 599.99,\n  \"availability\": \"AVAILABLE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/13",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "13"]
+            }
+          }
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/services/13",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "services", "13"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get All Orders (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        },
+        {
+          "name": "Get Orders By User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/user/180001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "user", "180001"]
+            }
+          }
+        },
+        {
+          "name": "Get Orders By Provider",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/provider/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "provider", "30001"]
+            }
+          }
+        },
+        {
+          "name": "Checkout - Single Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 180001,\n    \"providerId\": 30001,\n    \"serviceId\": 13,\n    \"quantity\": 1,\n    \"requestedDate\": \"2025-12-15T10:00:00Z\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Checkout - Multiple Services (Cart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 180001,\n    \"providerId\": 30001,\n    \"serviceId\": 13,\n    \"quantity\": 1,\n    \"requestedDate\": \"2025-12-15T10:00:00Z\"\n  },\n  {\n    \"userId\": 180001,\n    \"providerId\": 30001,\n    \"serviceId\": 14,\n    \"quantity\": 2,\n    \"requestedDate\": \"2025-12-16T14:00:00Z\"\n  },\n  {\n    \"userId\": 180001,\n    \"providerId\": 30001,\n    \"serviceId\": 15,\n    \"quantity\": 1,\n    \"requestedDate\": \"2025-12-17T09:00:00Z\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/checkout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "checkout"]
+            }
+          }
+        },
+        {
+          "name": "Update Order (User - Change Date)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestedDate\": \"2025-12-20T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        },
+        {
+          "name": "Update Order (User - Cancel)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderStatus\": \"CANCELLED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        },
+        {
+          "name": "Update Order (Provider - Schedule)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2025-12-20T15:00:00Z\",\n  \"orderStatus\": \"SCHEDULED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        },
+        {
+          "name": "Update Order (Provider - Complete)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderStatus\": \"COMPLETED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        },
+        {
+          "name": "Delete Order (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/31001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "31001"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Feedbacks",
+      "item": [
+        {
+          "name": "Get All Feedbacks (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedbacks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "feedbacks"]
+            }
+          }
+        },
+        {
+          "name": "Get Feedbacks For Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedbacks/service/13",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "feedbacks", "service", "13"]
+            }
+          }
+        },
+        {
+          "name": "Get Feedbacks For Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedbacks/provider/30001",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "feedbacks", "provider", "30001"]
+            }
+          }
+        },
+        {
+          "name": "Create Feedback - Integer Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": 13,\n  \"userId\": 180001,\n  \"comment\": \"Excellent service! Very professional and on time.\",\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedbacks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "feedbacks"]
+            }
+          }
+        },
+        {
+          "name": "Create Feedback - Decimal Rating",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_JWT_TOKEN_HERE"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": 13,\n  \"userId\": 180001,\n  \"comment\": \"Great service with minor improvements needed.\",\n  \"rating\": 4.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/feedbacks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "feedbacks"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
