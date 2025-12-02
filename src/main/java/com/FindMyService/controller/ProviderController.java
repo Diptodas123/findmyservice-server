@@ -28,7 +28,7 @@ public class ProviderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<ProviderDto>> getAllProviders() {
         List<ProviderDto> dtos = providerService.getAllProviders()
                 .stream()
@@ -38,7 +38,7 @@ public class ProviderController {
     }
 
     @GetMapping("/{providerId}")
-    public ResponseEntity<?> getProvider(@PathVariable Long providerId, HttpServletRequest request) {
+    public ResponseEntity<?> getProvider(@PathVariable Long providerId) {
         return providerService.getProviderById(providerId)
                 .map(DtoMapper::toDto)
                 .map(dto -> ResponseEntity.ok((Object) dto))
