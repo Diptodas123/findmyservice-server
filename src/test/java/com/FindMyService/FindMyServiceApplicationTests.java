@@ -1,24 +1,13 @@
 package com.FindMyService;
 
-import com.FindMyService.config.SecurityConfig;
-import com.FindMyService.security.JwtAuthFilter;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(
-		webEnvironment = SpringBootTest.WebEnvironment.NONE,
-		classes = FindMyServiceApplication.class
-)
-@ComponentScan(
-		basePackages = "com.FindMyService",
-		excludeFilters = @ComponentScan.Filter(
-				type = FilterType.ASSIGNABLE_TYPE,
-				classes = {SecurityConfig.class, JwtAuthFilter.class}
-		)
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@EnableAutoConfiguration(exclude = SecurityAutoConfiguration.class)
 @ActiveProfiles("test")
 class FindMyServiceApplicationTests {
 
