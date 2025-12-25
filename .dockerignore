@@ -1,0 +1,33 @@
+# Build outputs
+target/
+!target/*.jar
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Logs
+*.log
+
+# Documentation
+README.md
+HELP.md
+*.md
+
+# Other
+.env
+*.swp
+*.swo
+*~
