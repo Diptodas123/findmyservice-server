@@ -11,11 +11,12 @@ A Spring Boot backend for a service marketplace where users can browse providers
 - Swagger UI for API exploration
 
 ## Tech Stack
-- Java 17+ (OpenJDK)
-- Spring Boot
+- Java 21 (OpenJDK)
+- Spring Boot 3.5.7
 - Spring Security (JWT)
 - Maven (with `mvnw` wrapper)
 - Swagger/OpenAPI
+- Docker & Docker Compose
 
 ## Project Structure
 - Core app: [src/main/java/com/FindMyService](src/main/java/com/FindMyService)
@@ -31,11 +32,35 @@ A Spring Boot backend for a service marketplace where users can browse providers
 
 ## Getting Started
 ### Prerequisites
-- macOS/Linux/Windows
-- Java 17+ installed (verify with `java -version`)
+- **Option 1 - Docker (Recommended):**
+  - Docker & Docker Compose installed
+  
+- **Option 2 - Local:**
+  - macOS/Linux/Windows
+  - Java 21 installed (verify with `java -version`)
+  - Maven (or use included `mvnw` wrapper)
 
-### Setup
-- Clone/open the project, then use the Maven wrapper:
+### Setup & Run
+
+#### Using Docker (Recommended)
+Build and run with Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+Or build and run manually:
+
+```bash
+# Build image
+docker build -t findmyservice:latest .
+
+# Run container
+docker run -p 8080:8080 findmyservice:latest
+```
+
+#### Local Development
+Clone/open the project, then use the Maven wrapper:
 
 ```bash
 ./mvnw -v
@@ -68,6 +93,26 @@ Typical flow:
 3. Use `Authorization: Bearer <token>` for protected endpoints
 
 ## Common Commands
+
+### Docker Commands
+```bash
+# Build and run with compose
+docker-compose up --build
+
+# Stop containers
+docker-compose down
+
+# View logs
+docker-compose logs -f
+
+# Rebuild image
+docker build -t findmyservice:latest .
+
+# Run container with custom port
+docker run -p 9090:8080 findmyservice:latest
+```
+
+### Local Development
 ```bash
 # Build
 ./mvnw clean install
