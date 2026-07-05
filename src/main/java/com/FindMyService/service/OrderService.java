@@ -74,13 +74,13 @@ public class OrderService {
 
     @Transactional
     public List<OrderDto> createOrdersBatch(List<OrderDto> orderDtos) {
-        // user and provider are the same for all items in a checkout batch
         User user = userRepository.findById(orderDtos.getFirst().getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + orderDtos.getFirst().getUserId()));
-        Provider provider = providerRepository.findById(orderDtos.getFirst().getProviderId())
-                .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + orderDtos.getFirst().getProviderId()));
 
-        return orderDtos.stream().map(orderDto -> {
+        List<OrderDto> result = new java.util.ArrayList<>();
+        for (OrderDto orderDto : orderDtos) {
+            Provider provider = providerRepository.findById(orderDto.getProviderId())
+                    .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + orderDto.getProviderId()));
             ServiceCatalog service = serviceCatalogRepository.findById(orderDto.getServiceId())
                     .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + orderDto.getServiceId()));
             Order order = Order.builder()
@@ -92,8 +92,9 @@ public class OrderService {
                     .quantity(orderDto.getQuantity() != null ? orderDto.getQuantity() : 1)
                     .requestedDate(orderDto.getRequestedDate())
                     .build();
-            return DtoMapper.toDto(orderRepository.save(order));
-        }).toList();
+            result.add(DtoMapper.toDto(orderRepository.save(order)));
+        }
+        return result;
     }
 
     @Transactional
