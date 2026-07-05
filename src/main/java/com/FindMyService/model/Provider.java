@@ -47,7 +47,7 @@ public class Provider {
 
     private String profilePictureUrl;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @Column(name = "image_url")
     private List<String> imageUrls;
 

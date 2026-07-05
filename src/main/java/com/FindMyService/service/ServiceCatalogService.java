@@ -3,42 +3,38 @@ package com.FindMyService.service;
 import com.FindMyService.model.Provider;
 import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.dto.ServiceCatalogDto;
+import com.FindMyService.repository.FeedbackRepository;
+import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
 import com.FindMyService.repository.ServiceCatalogRepository;
 import com.FindMyService.utils.DtoMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ServiceCatalogService {
 
     private final ServiceCatalogRepository serviceCatalogRepository;
     private final ProviderRepository providerRepository;
+    private final OrderRepository orderRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public ServiceCatalogService(ServiceCatalogRepository serviceCatalogRepository,
-                                 ProviderRepository providerRepository) {
-        this.serviceCatalogRepository = serviceCatalogRepository;
-        this.providerRepository = providerRepository;
+    public List<ServiceCatalogDto> getAllServices() {
+        return serviceCatalogRepository.findAllWithProvider().stream().map(DtoMapper::toDto).toList();
     }
 
-    public List<ServiceCatalog> getAllServices() {
-        return serviceCatalogRepository.findAll();
+    public Optional<ServiceCatalogDto> getServiceById(Long serviceId) {
+        return serviceCatalogRepository.findByIdWithProvider(serviceId).map(DtoMapper::toDto);
     }
 
-    public Optional<ServiceCatalog> getServiceById(Long serviceId) {
-        return serviceCatalogRepository.findById(serviceId);
-    }
-
-    public List<ServiceCatalog> getServicesByProvider(Long providerId) {
-        if (providerId == null || providerId <= 0) {
-            return List.of();
-        }
-        if (!providerRepository.existsById(providerId)) {
-            return List.of();
-        }
-        return serviceCatalogRepository.findByProviderId_ProviderId(providerId);
+    public List<ServiceCatalogDto> getServicesByProvider(Long providerId) {
+        if (providerId == null || providerId <= 0) return List.of();
+        if (!providerRepository.existsById(providerId)) return List.of();
+        return serviceCatalogRepository.findByProviderIdWithProvider(providerId).stream().map(DtoMapper::toDto).toList();
     }
 
     @Transactional
@@ -79,6 +75,8 @@ public class ServiceCatalogService {
     public void deleteService(Long serviceId) {
         ServiceCatalog service = serviceCatalogRepository.findById(serviceId)
                 .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + serviceId));
+        feedbackRepository.deleteByService(service);
+        orderRepository.deleteByService(service);
         serviceCatalogRepository.delete(service);
     }
 

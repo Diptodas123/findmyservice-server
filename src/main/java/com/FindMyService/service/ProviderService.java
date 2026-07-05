@@ -2,36 +2,38 @@ package com.FindMyService.service;
 
 import com.FindMyService.model.Provider;
 import com.FindMyService.model.dto.ProviderDto;
+import com.FindMyService.repository.FeedbackRepository;
+import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
+import com.FindMyService.repository.ServiceCatalogRepository;
 import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.ResponseBuilder;
-import com.FindMyService.utils.OwnerCheck;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.function.Consumer;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class ProviderService {
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
+    private final PasswordEncoder passwordEncoder;
     private final ProviderRepository providerRepository;
+    private final ServiceCatalogRepository serviceCatalogRepository;
+    private final OrderRepository orderRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public ProviderService(ProviderRepository providerRepository, OwnerCheck ownerCheck) {
-        this.providerRepository = providerRepository;
+    public List<ProviderDto> getAllProviders() {
+        return providerRepository.findAll().stream().map(DtoMapper::toDto).toList();
     }
 
-    public List<Provider> getAllProviders() {
-        return providerRepository.findAll();
-    }
-
-    public Optional<Provider> getProviderById(Long providerId) {
-        return providerRepository.findById(providerId);
+    public Optional<ProviderDto> getProviderById(Long providerId) {
+        return providerRepository.findById(providerId).map(DtoMapper::toDto);
     }
 
     @Transactional
@@ -51,11 +53,11 @@ public class ProviderService {
         try {
             provider.setPassword(passwordEncoder.encode(provider.getPassword()));
             Provider created = providerRepository.save(provider);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toDto(created));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseBuilder.serverError("Failed to create provider: " + e.getMessage()));
+                    .body(ResponseBuilder.build(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create provider: " + e.getMessage()));
         }
     }
 
@@ -95,10 +97,13 @@ public class ProviderService {
     public void deleteProvider(Long providerId) {
         Provider provider = providerRepository.findById(providerId)
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + providerId));
+        feedbackRepository.deleteByProviderId(providerId);
+        orderRepository.deleteByProviderId(providerId);
+        serviceCatalogRepository.deleteByProviderId_ProviderId(providerId);
         providerRepository.delete(provider);
     }
 
-    private <T> void updateIfNotNull(T value, java.util.function.Consumer<T> setter) {
+    private <T> void updateIfNotNull(T value, Consumer<T> setter) {
         if (value != null) {
             setter.accept(value);
         }

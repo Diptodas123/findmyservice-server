@@ -9,8 +9,11 @@ import com.FindMyService.model.enums.OrderStatus;
 import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
 import com.FindMyService.repository.UserRepository;
+import com.FindMyService.repository.ServiceCatalogRepository;
 import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.ResponseBuilder;
+import com.FindMyService.utils.OwnerCheck;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,7 +22,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -27,32 +29,23 @@ import java.util.function.Consumer;
 import static com.FindMyService.model.enums.OrderStatus.REQUESTED;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProviderRepository providerRepository;
-    private final com.FindMyService.repository.ServiceCatalogRepository serviceCatalogRepository;
-    private final com.FindMyService.utils.OwnerCheck ownerCheck;
+    private final ServiceCatalogRepository serviceCatalogRepository;
+    private final OwnerCheck ownerCheck;
 
-    public OrderService(OrderRepository orderRepository,
-                        UserRepository userRepository,
-                        ProviderRepository providerRepository,
-                        com.FindMyService.repository.ServiceCatalogRepository serviceCatalogRepository,
-                        com.FindMyService.utils.OwnerCheck ownerCheck) {
-        this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.providerRepository = providerRepository;
-        this.serviceCatalogRepository = serviceCatalogRepository;
-        this.ownerCheck = ownerCheck;
+    public List<OrderDto> getAllOrders() {
+        return orderRepository.findAllWithRefs().stream()
+                .map(DtoMapper::toDto)
+                .toList();
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
-    }
-
-    public Optional<Order> getOrderById(Long orderId) {
-        return orderRepository.findById(orderId);
+    public Optional<OrderDto> getOrderById(Long orderId) {
+        return orderRepository.findByIdWithRefs(orderId).map(DtoMapper::toDto);
     }
 
     @Transactional
@@ -81,14 +74,26 @@ public class OrderService {
 
     @Transactional
     public List<OrderDto> createOrdersBatch(List<OrderDto> orderDtos) {
-        List<OrderDto> createdOrders = new ArrayList<>();
+        // user and provider are the same for all items in a checkout batch
+        User user = userRepository.findById(orderDtos.getFirst().getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + orderDtos.getFirst().getUserId()));
+        Provider provider = providerRepository.findById(orderDtos.getFirst().getProviderId())
+                .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + orderDtos.getFirst().getProviderId()));
 
-        for (OrderDto orderDto : orderDtos) {
-            OrderDto createdOrder = createOrder(orderDto);
-            createdOrders.add(createdOrder);
-        }
-
-        return createdOrders;
+        return orderDtos.stream().map(orderDto -> {
+            ServiceCatalog service = serviceCatalogRepository.findById(orderDto.getServiceId())
+                    .orElseThrow(() -> new IllegalArgumentException("Service not found with id: " + orderDto.getServiceId()));
+            Order order = Order.builder()
+                    .userId(user)
+                    .providerId(provider)
+                    .serviceId(service)
+                    .orderStatus(REQUESTED)
+                    .totalCost(orderDto.getTotalCost() != null ? orderDto.getTotalCost() : service.getCost())
+                    .quantity(orderDto.getQuantity() != null ? orderDto.getQuantity() : 1)
+                    .requestedDate(orderDto.getRequestedDate())
+                    .build();
+            return DtoMapper.toDto(orderRepository.save(order));
+        }).toList();
     }
 
     @Transactional
@@ -134,8 +139,12 @@ public class OrderService {
         Order existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + orderId));
 
-        Authentication auth =
-            SecurityContextHolder.getContext().getAuthentication();
+        if (existingOrder.getOrderStatus() == OrderStatus.COMPLETED ||
+            existingOrder.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot update an order with status: " + existingOrder.getOrderStatus());
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         String userRole = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -199,8 +208,10 @@ public class OrderService {
             updateIfNotNull(orderDto.getTotalCost(), existingOrder::setTotalCost);
         }
 
-        Order updated = orderRepository.save(existingOrder);
-        return com.FindMyService.utils.DtoMapper.toDto(updated);
+        orderRepository.save(existingOrder);
+        return orderRepository.findByIdWithRefs(orderId)
+                .map(DtoMapper::toDto)
+                .orElseThrow();
     }
 
     private <T> void updateIfNotNull(T value, Consumer<T> setter) {
