@@ -22,6 +22,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -77,7 +78,7 @@ public class OrderService {
         User user = userRepository.findById(orderDtos.getFirst().getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + orderDtos.getFirst().getUserId()));
 
-        List<OrderDto> result = new java.util.ArrayList<>();
+        List<OrderDto> result = new ArrayList<>();
         for (OrderDto orderDto : orderDtos) {
             Provider provider = providerRepository.findById(orderDto.getProviderId())
                     .orElseThrow(() -> new IllegalArgumentException("Provider not found with id: " + orderDto.getProviderId()));
