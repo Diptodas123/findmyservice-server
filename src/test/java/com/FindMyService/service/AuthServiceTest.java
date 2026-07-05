@@ -250,4 +250,36 @@ class AuthServiceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         verify(jwtUtil, never()).generateToken(anyString(), anyString(), any(Role.class));
     }
+
+    @Test
+    void registerWithAdminRoleReturnsBadRequest() {
+        registerRequest.setRole(Role.ADMIN);
+        ResponseEntity<Map<String, Object>> response = authService.register(registerRequest);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void loginWithNullRoleReturnsBadRequest() {
+        loginRequest.setRole(null);
+        ResponseEntity<Map<String, Object>> response = authService.login(loginRequest);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void loginWithMismatchedRoleReturnsForbidden() {
+        User user = new User();
+        user.setUserId(1L);
+        user.setEmail("test@example.com");
+        user.setPassword("encodedPassword");
+        user.setRole(Role.USER);
+
+        loginRequest.setRole(Role.ADMIN); // user exists as USER, tries to log in as ADMIN
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(encoder.matches(anyString(), anyString())).thenReturn(true);
+
+        ResponseEntity<Map<String, Object>> response = authService.login(loginRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(jwtUtil, never()).generateToken(anyString(), anyString(), any(Role.class));
+    }
 }

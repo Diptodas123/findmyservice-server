@@ -1,8 +1,11 @@
 package com.FindMyService.service;
 
 import com.FindMyService.model.Provider;
+import com.FindMyService.model.dto.ProviderDto;
+import com.FindMyService.repository.FeedbackRepository;
+import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
-import com.FindMyService.utils.OwnerCheck;
+import com.FindMyService.repository.ServiceCatalogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,13 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -26,14 +28,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProviderServiceTest {
 
-    @Mock
-    private ProviderRepository providerRepository;
-
-    @Mock
-    private OwnerCheck ownerCheck;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private ProviderRepository providerRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private FeedbackRepository feedbackRepository;
+    @Mock private OrderRepository orderRepository;
+    @Mock private ServiceCatalogRepository serviceCatalogRepository;
 
     @InjectMocks
     private ProviderService providerService;
@@ -42,145 +41,156 @@ class ProviderServiceTest {
 
     @BeforeEach
     void setUp() {
-        testProvider = new Provider();
-        testProvider.setProviderId(1L);
-        testProvider.setEmail("provider@example.com");
-        testProvider.setPassword("password123");
-        testProvider.setProviderName("Test Provider");
-        ReflectionTestUtils.setField(providerService, "passwordEncoder", passwordEncoder);
+        testProvider = Provider.builder()
+                .providerId(1L)
+                .email("provider@example.com")
+                .password("password123")
+                .providerName("Test Provider")
+                .build();
     }
 
     @Test
-    void getAllProvidersReturnsListOfProviders() {
-        // Given
-        List<Provider> providers = Arrays.asList(testProvider, new Provider());
-        when(providerRepository.findAll()).thenReturn(providers);
-
-        // When
-        List<Provider> result = providerService.getAllProviders();
-
-        // Then
-        assertThat(result).hasSize(2);
-        verify(providerRepository).findAll();
+    void getAllProvidersReturnsAll() {
+        when(providerRepository.findAll()).thenReturn(List.of(testProvider, new Provider()));
+        assertThat(providerService.getAllProviders()).hasSize(2);
     }
 
     @Test
-    void getProviderByIdWithValidIdReturnsProvider() {
-        // Given
+    void getProviderByIdFound() {
+        when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+        assertThat(providerService.getProviderById(1L)).isPresent();
+    }
+
+    @Test
+    void getProviderByIdNotFound() {
+        when(providerRepository.findById(999L)).thenReturn(Optional.empty());
+        assertThat(providerService.getProviderById(999L)).isEmpty();
+    }
+
+    @Test
+    void createProviderReturnsCreated() {
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(providerRepository.save(any())).thenReturn(testProvider);
+
+        ResponseEntity<?> response = providerService.createProvider(testProvider);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        verify(providerRepository).save(any());
+    }
+
+    @Test
+    void createProviderNullEmailReturnsBadRequest() {
+        testProvider.setEmail(null);
+        assertThat(providerService.createProvider(testProvider).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(providerRepository, never()).save(any());
+    }
+
+    @Test
+    void createProviderEmptyEmailReturnsBadRequest() {
+        testProvider.setEmail("");
+        assertThat(providerService.createProvider(testProvider).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(providerRepository, never()).save(any());
+    }
+
+    @Test
+    void createProviderNullPasswordReturnsBadRequest() {
+        testProvider.setPassword(null);
+        assertThat(providerService.createProvider(testProvider).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(providerRepository, never()).save(any());
+    }
+
+    @Test
+    void createProviderEmptyPasswordReturnsBadRequest() {
+        testProvider.setPassword("");
+        assertThat(providerService.createProvider(testProvider).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(providerRepository, never()).save(any());
+    }
+
+    @Test
+    void createProviderRepositoryExceptionReturnsServerError() {
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+        when(providerRepository.save(any())).thenThrow(new RuntimeException("DB error"));
+        assertThat(providerService.createProvider(testProvider).getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    void updateProviderPatchesFields() {
+        when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+        when(providerRepository.save(any())).thenReturn(testProvider);
+
+        ProviderDto patch = new ProviderDto();
+        patch.setPhone("555-9999");
+
+        ProviderDto result = providerService.updateProvider(1L, patch);
+
+        assertThat(result).isNotNull();
+        verify(providerRepository).save(testProvider);
+    }
+
+    @Test
+    void updateProviderNotFoundThrows() {
+        when(providerRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> providerService.updateProvider(99L, new ProviderDto()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Provider not found");
+    }
+
+    @Test
+    void deleteProviderSuccess() {
+        when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+        providerService.deleteProvider(1L);
+        verify(providerRepository).delete(testProvider);
+    }
+
+    @Test
+    void deleteProviderNotFoundThrows() {
+        when(providerRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> providerService.deleteProvider(99L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Provider not found");
+    }
+
+    @Test
+    void updateProviderPasswordChangeSuccess() {
+        testProvider.setPassword("encodedOld");
+        when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+        when(passwordEncoder.matches("oldpass", "encodedOld")).thenReturn(true);
+        when(passwordEncoder.encode("newpass")).thenReturn("encodedNew");
+        when(providerRepository.save(any())).thenReturn(testProvider);
+
+        ProviderDto patch = new ProviderDto();
+        patch.setCurrentPassword("oldpass");
+        patch.setPassword("newpass");
+
+        providerService.updateProvider(1L, patch);
+
+        verify(passwordEncoder).encode("newpass");
+    }
+
+    @Test
+    void updateProviderWrongCurrentPasswordThrows() {
+        testProvider.setPassword("encodedOld");
+        when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+        when(passwordEncoder.matches("wrongpass", "encodedOld")).thenReturn(false);
+
+        ProviderDto patch = new ProviderDto();
+        patch.setCurrentPassword("wrongpass");
+        patch.setPassword("newpass");
+
+        assertThatThrownBy(() -> providerService.updateProvider(1L, patch))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Current password is incorrect");
+    }
+
+    @Test
+    void updateProviderMissingCurrentPasswordThrows() {
         when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
 
-        // When
-        Optional<Provider> result = providerService.getProviderById(1L);
+        ProviderDto patch = new ProviderDto();
+        patch.setPassword("newpass");
 
-        // Then
-        assertThat(result).isPresent();
-        assertThat(result.get().getProviderId()).isEqualTo(1L);
-        verify(providerRepository).findById(1L);
-    }
-
-    @Test
-    void getProviderByIdWithInvalidIdReturnsEmpty() {
-        // Given
-        when(providerRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // When
-        Optional<Provider> result = providerService.getProviderById(999L);
-
-        // Then
-        assertThat(result).isEmpty();
-        verify(providerRepository).findById(999L);
-    }
-
-    @Test
-    void createProviderWithValidDataReturnsCreated() {
-        // Given
-        Provider inputProvider = new Provider();
-        inputProvider.setProviderId(1L);
-        inputProvider.setEmail("provider@example.com");
-        inputProvider.setPassword("password123");
-        inputProvider.setProviderName("Test Provider");
-
-        Provider savedProvider = new Provider();
-        savedProvider.setProviderId(1L);
-        savedProvider.setEmail("provider@example.com");
-        savedProvider.setPassword("encodedPassword");
-        savedProvider.setProviderName("Test Provider");
-
-        when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
-        when(providerRepository.save(any(Provider.class))).thenReturn(savedProvider);
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(inputProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        verify(passwordEncoder).encode("password123");
-        verify(providerRepository).save(any(Provider.class));
-    }
-
-    @Test
-    void createProviderWithNullEmailReturnsBadRequest() {
-        // Given
-        testProvider.setEmail(null);
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(testProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verify(providerRepository, never()).save(any(Provider.class));
-    }
-
-    @Test
-    void createProviderWithEmptyEmailReturnsBadRequest() {
-        // Given
-        testProvider.setEmail("");
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(testProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verify(providerRepository, never()).save(any(Provider.class));
-    }
-
-    @Test
-    void createProviderWithNullPasswordReturnsBadRequest() {
-        // Given
-        testProvider.setPassword(null);
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(testProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verify(providerRepository, never()).save(any(Provider.class));
-    }
-
-    @Test
-    void createProviderWithEmptyPasswordReturnsBadRequest() {
-        // Given
-        testProvider.setPassword("");
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(testProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        verify(providerRepository, never()).save(any(Provider.class));
-    }
-
-    @Test
-    void createProviderWithRepositoryExceptionReturnsInternalServerError() {
-        // Given
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        when(providerRepository.save(any(Provider.class))).thenThrow(new RuntimeException("Database error"));
-
-        // When
-        ResponseEntity<?> response = providerService.createProvider(testProvider);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThatThrownBy(() -> providerService.updateProvider(1L, patch))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Current password is required");
     }
 }

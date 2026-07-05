@@ -30,6 +30,9 @@ public class ProviderDto{
     private Instant createdAt;
     private String profilePictureUrl;
     private List<String> imageUrls;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private BigDecimal avgRating;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private int totalRatings;
 }

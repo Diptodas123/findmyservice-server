@@ -8,7 +8,9 @@ import com.FindMyService.repository.FeedbackRepository;
 import com.FindMyService.repository.ProviderRepository;
 import com.FindMyService.repository.ServiceCatalogRepository;
 import com.FindMyService.repository.UserRepository;
+import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.ResponseBuilder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
@@ -25,18 +28,10 @@ public class FeedbackService {
     private final ServiceCatalogRepository serviceCatalogRepository;
     private final ProviderRepository providerRepository;
 
-    public FeedbackService(FeedbackRepository feedbackRepository,
-                           UserRepository userRepository,
-                           ServiceCatalogRepository serviceCatalogRepository,
-                           ProviderRepository providerRepository) {
-        this.feedbackRepository = feedbackRepository;
-        this.userRepository = userRepository;
-        this.serviceCatalogRepository = serviceCatalogRepository;
-        this.providerRepository = providerRepository;
-    }
-
-    public List<Feedback> getAllFeedbacks() {
-        return feedbackRepository.findAll();
+    public List<FeedbackDto> getAllFeedbacks() {
+        return feedbackRepository.findAllWithRefs().stream()
+            .map(DtoMapper::toDto)
+            .toList();
     }
 
     @Transactional
@@ -68,19 +63,10 @@ public class FeedbackService {
         } catch (RuntimeException e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseBuilder.serverError(e.getMessage()));
+                    .body(ResponseBuilder.build(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
         }
 
-        FeedbackDto responseDto = FeedbackDto.builder()
-                .feedbackId(saved.getFeedbackId())
-                .serviceId(saved.getServiceId().getServiceId())
-                .userId(saved.getUserId().getUserId())
-                .comment(saved.getComment())
-                .rating(saved.getRating())
-                .createdAt(saved.getCreatedAt())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toDto(saved));
     }
 
     @Transactional
@@ -95,14 +81,7 @@ public class FeedbackService {
         List<Feedback> feedbacks = feedbackRepository.findByServiceId(serviceCatalog.get());
 
         List<FeedbackDto> feedbackDtos = feedbacks.stream()
-                .map(feedback -> FeedbackDto.builder()
-                        .feedbackId(feedback.getFeedbackId())
-                        .serviceId(feedback.getServiceId().getServiceId())
-                        .userId(feedback.getUserId().getUserId())
-                        .comment(feedback.getComment())
-                        .rating(feedback.getRating())
-                        .createdAt(feedback.getCreatedAt())
-                        .build())
+                .map(DtoMapper::toDto)
                 .toList();
 
         return ResponseEntity.ok(feedbackDtos);
@@ -110,58 +89,19 @@ public class FeedbackService {
 
     @Transactional
     public ResponseEntity<?> getAllFeedbacksForProvider(Long providerId) {
-        List<ServiceCatalog> services = serviceCatalogRepository.findByProviderId_ProviderId(providerId);
-        if (services.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ResponseBuilder.notFound("No services found for provider"));
-        }
-        List<Feedback> feedbacks = feedbackRepository.findAll().stream()
-            .filter(fb -> services.contains(fb.getServiceId()))
-            .toList();
-        List<FeedbackDto> feedbackDtos = feedbacks.stream()
-            .map(feedback -> FeedbackDto.builder()
-                .feedbackId(feedback.getFeedbackId())
-                .serviceId(feedback.getServiceId().getServiceId())
-                .userId(feedback.getUserId().getUserId())
-                .comment(feedback.getComment())
-                .rating(feedback.getRating())
-                .createdAt(feedback.getCreatedAt())
-                .build())
+        List<FeedbackDto> feedbackDtos = feedbackRepository.findByProviderId(providerId).stream()
+            .map(DtoMapper::toDto)
             .toList();
         return ResponseEntity.ok(feedbackDtos);
     }
 
+    @Transactional
     void updateRatings(Feedback feedback) {
-        ServiceCatalog serviceCatalog = serviceCatalogRepository.findById(feedback.getServiceId().getServiceId())
+        Long serviceId = feedback.getServiceId().getServiceId();
+        ServiceCatalog serviceCatalog = serviceCatalogRepository.findById(serviceId)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
-        com.FindMyService.model.Provider provider = providerRepository.findById(serviceCatalog.getProviderId().getProviderId())
-                .orElseThrow(() -> new RuntimeException("Provider not found"));
 
-        int totalServiceReviews = serviceCatalog.getTotalRatings();
-        int totalProviderReviews = provider.getTotalRatings();
-
-        int newTotalServiceReviews = totalServiceReviews + 1;
-        int newTotalProviderReviews = totalProviderReviews + 1;
-
-        BigDecimal currentProviderRating = provider.getAvgRating() != null ? provider.getAvgRating() : BigDecimal.ZERO;
-        BigDecimal updatedProviderRating = currentProviderRating
-                .multiply(BigDecimal.valueOf(totalProviderReviews))
-                .add(feedback.getRating())
-                .divide(BigDecimal.valueOf(newTotalProviderReviews), 2, java.math.RoundingMode.DOWN);
-
-        BigDecimal currentServiceRating = serviceCatalog.getAvgRating() != null ? serviceCatalog.getAvgRating() : BigDecimal.ZERO;
-        BigDecimal updatedServiceRating = currentServiceRating
-                .multiply(BigDecimal.valueOf(totalServiceReviews))
-                .add(feedback.getRating())
-                .divide(BigDecimal.valueOf(newTotalServiceReviews), 2, java.math.RoundingMode.DOWN);
-
-        provider.setAvgRating(updatedProviderRating);
-        provider.setTotalRatings(newTotalProviderReviews);
-
-        serviceCatalog.setAvgRating(updatedServiceRating);
-        serviceCatalog.setTotalRatings(newTotalServiceReviews);
-
-        providerRepository.save(provider);
-        serviceCatalogRepository.save(serviceCatalog);
+        serviceCatalogRepository.incrementRating(serviceId, feedback.getRating());
+        providerRepository.incrementRating(serviceCatalog.getProviderId().getProviderId(), feedback.getRating());
     }
 }

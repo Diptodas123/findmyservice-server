@@ -3,6 +3,8 @@ package com.FindMyService.service;
 import com.FindMyService.model.Provider;
 import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.dto.ServiceCatalogDto;
+import com.FindMyService.repository.FeedbackRepository;
+import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.ProviderRepository;
 import com.FindMyService.repository.ServiceCatalogRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,12 @@ class ServiceCatalogServiceTest {
     @Mock
     private ProviderRepository providerRepository;
 
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private FeedbackRepository feedbackRepository;
+
     @InjectMocks
     private ServiceCatalogService serviceCatalogService;
 
@@ -55,81 +63,63 @@ class ServiceCatalogServiceTest {
 
     @Test
     void getAllServicesReturnsListOfServices() {
-        // Given
         List<ServiceCatalog> services = Arrays.asList(testService, new ServiceCatalog());
-        when(serviceCatalogRepository.findAll()).thenReturn(services);
+        when(serviceCatalogRepository.findAllWithProvider()).thenReturn(services);
 
-        // When
-        List<ServiceCatalog> result = serviceCatalogService.getAllServices();
+        List<ServiceCatalogDto> result = serviceCatalogService.getAllServices();
 
-        // Then
         assertThat(result).hasSize(2);
-        verify(serviceCatalogRepository).findAll();
+        verify(serviceCatalogRepository).findAllWithProvider();
     }
 
     @Test
     void getServiceByIdWithValidIdReturnsService() {
-        // Given
-        when(serviceCatalogRepository.findById(1L)).thenReturn(Optional.of(testService));
+        when(serviceCatalogRepository.findByIdWithProvider(1L)).thenReturn(Optional.of(testService));
 
-        // When
-        Optional<ServiceCatalog> result = serviceCatalogService.getServiceById(1L);
+        Optional<ServiceCatalogDto> result = serviceCatalogService.getServiceById(1L);
 
-        // Then
         assertThat(result).isPresent();
         assertThat(result.get().getServiceId()).isEqualTo(1L);
-        verify(serviceCatalogRepository).findById(1L);
+        verify(serviceCatalogRepository).findByIdWithProvider(1L);
     }
 
     @Test
     void getServiceByIdWithInvalidIdReturnsEmpty() {
-        // Given
-        when(serviceCatalogRepository.findById(999L)).thenReturn(Optional.empty());
+        when(serviceCatalogRepository.findByIdWithProvider(999L)).thenReturn(Optional.empty());
 
-        // When
-        Optional<ServiceCatalog> result = serviceCatalogService.getServiceById(999L);
+        Optional<ServiceCatalogDto> result = serviceCatalogService.getServiceById(999L);
 
-        // Then
         assertThat(result).isEmpty();
-        verify(serviceCatalogRepository).findById(999L);
+        verify(serviceCatalogRepository).findByIdWithProvider(999L);
     }
 
     @Test
     void getServicesByProviderWithValidProviderIdReturnsServices() {
-        // Given
         when(providerRepository.existsById(1L)).thenReturn(true);
-        when(serviceCatalogRepository.findByProviderId_ProviderId(1L))
-                .thenReturn(Arrays.asList(testService));
+        when(serviceCatalogRepository.findByProviderIdWithProvider(1L)).thenReturn(Arrays.asList(testService));
 
-        // When
-        List<ServiceCatalog> result = serviceCatalogService.getServicesByProvider(1L);
+        List<ServiceCatalogDto> result = serviceCatalogService.getServicesByProvider(1L);
 
-        // Then
         assertThat(result).hasSize(1);
-        verify(serviceCatalogRepository).findByProviderId_ProviderId(1L);
+        verify(serviceCatalogRepository).findByProviderIdWithProvider(1L);
     }
 
     @Test
     void getServicesByProviderWithNullProviderIdReturnsEmptyList() {
-        // When
-        List<ServiceCatalog> result = serviceCatalogService.getServicesByProvider(null);
+        List<ServiceCatalogDto> result = serviceCatalogService.getServicesByProvider(null);
 
-        // Then
         assertThat(result).isEmpty();
-        verify(serviceCatalogRepository, never()).findByProviderId_ProviderId(any());
+        verify(serviceCatalogRepository, never()).findByProviderIdWithProvider(any());
     }
 
     @Test
     void getServicesByProviderWithInvalidProviderIdReturnsEmptyList() {
-        // Given
         when(providerRepository.existsById(999L)).thenReturn(false);
 
-        // When
-        List<ServiceCatalog> result = serviceCatalogService.getServicesByProvider(999L);
+        List<ServiceCatalogDto> result = serviceCatalogService.getServicesByProvider(999L);
 
-        // Then
         assertThat(result).isEmpty();
-        verify(serviceCatalogRepository, never()).findByProviderId_ProviderId(any());
+        verify(serviceCatalogRepository, never()).findByProviderIdWithProvider(any());
     }
 
     @Test
@@ -201,5 +191,29 @@ class ServiceCatalogServiceTest {
         // Then
         verify(serviceCatalogRepository).findById(1L);
         verify(serviceCatalogRepository).delete(any(ServiceCatalog.class));
+    }
+
+    @Test
+    void deleteServiceWithInvalidIdThrowsException() {
+        when(serviceCatalogRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> serviceCatalogService.deleteService(999L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Service not found with id: 999");
+
+        verify(serviceCatalogRepository, never()).delete(any());
+    }
+
+    @Test
+    void updateServiceWithInvalidProviderIdThrowsException() {
+        when(serviceCatalogRepository.findById(1L)).thenReturn(Optional.of(testService));
+        when(providerRepository.findById(999L)).thenReturn(Optional.empty());
+        testDto.setProviderId(999L);
+
+        assertThatThrownBy(() -> serviceCatalogService.updateService(1L, testDto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Provider from payload not found");
+
+        verify(serviceCatalogRepository, never()).save(any());
     }
 }

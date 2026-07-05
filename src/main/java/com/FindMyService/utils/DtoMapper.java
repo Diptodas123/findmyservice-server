@@ -1,9 +1,11 @@
 package com.FindMyService.utils;
 
+import com.FindMyService.model.Feedback;
 import com.FindMyService.model.Order;
 import com.FindMyService.model.ServiceCatalog;
 import com.FindMyService.model.User;
 import com.FindMyService.model.Provider;
+import com.FindMyService.model.dto.FeedbackDto;
 import com.FindMyService.model.dto.OrderDto;
 import com.FindMyService.model.dto.ProviderDto;
 import com.FindMyService.model.dto.ServiceCatalogDto;
@@ -86,9 +88,21 @@ public final class DtoMapper {
                 .build();
     }
 
+    public static FeedbackDto toDto(Feedback feedback) {
+        if (feedback == null) return null;
+        return FeedbackDto.builder()
+                .feedbackId(feedback.getFeedbackId())
+                .serviceId(feedback.getServiceId().getServiceId())
+                .userId(feedback.getUserId().getUserId())
+                .comment(feedback.getComment())
+                .rating(feedback.getRating())
+                .createdAt(feedback.getCreatedAt())
+                .build();
+    }
+
     public static OrderDto toDto(Order order) {
         if (order == null) return null;
-        return com.FindMyService.model.dto.OrderDto.builder()
+        return OrderDto.builder()
                 .orderId(order.getOrderId())
                 .userId(order.getUserId() != null ? order.getUserId().getUserId() : null)
                 .providerId(order.getProviderId() != null ? order.getProviderId().getProviderId() : null)

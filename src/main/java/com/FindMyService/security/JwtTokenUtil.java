@@ -39,7 +39,7 @@ public class JwtTokenUtil {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
-                .claim("role", role.name())
+                .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(exp)
                 .signWith(secretKey)

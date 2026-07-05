@@ -2,37 +2,39 @@ package com.FindMyService.service;
 
 import com.FindMyService.model.User;
 import com.FindMyService.model.dto.UserDto;
+import com.FindMyService.repository.FeedbackRepository;
+import com.FindMyService.repository.OrderRepository;
 import com.FindMyService.repository.UserRepository;
 import com.FindMyService.utils.DtoMapper;
 import com.FindMyService.utils.ResponseBuilder;
-import com.FindMyService.utils.OwnerCheck;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.function.Consumer;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public UserService(UserRepository userRepository, OwnerCheck ownerCheck) {
-        this.userRepository = userRepository;
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream().map(DtoMapper::toDto).toList();
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    public Optional<User> getUserById(Long userId) {
-        return userRepository.findById(userId);
+    public Optional<UserDto> getUserById(Long userId) {
+        return userRepository.findById(userId).map(DtoMapper::toDto);
     }
 
     @Transactional
@@ -52,11 +54,11 @@ public class UserService {
         try {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             User created = userRepository.save(user);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toDto(created));
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ResponseBuilder.serverError("Failed to create user: " + e.getMessage()));
+                    .body(ResponseBuilder.build(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create user: " + e.getMessage()));
         }
     }
 
@@ -73,8 +75,17 @@ public class UserService {
         updateIfNotNull(userDto.getCity(), existingUser::setCity);
         updateIfNotNull(userDto.getState(), existingUser::setState);
         updateIfNotNull(userDto.getZipCode(), existingUser::setZipCode);
-        updateIfNotNull(userDto.getRole(), existingUser::setRole);
         updateIfNotNull(userDto.getProfilePictureUrl(), existingUser::setProfilePictureUrl);
+
+        if (userDto.getRole() != null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> "ADMIN".equals(a.getAuthority()));
+            if (!isAdmin) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admins can change roles");
+            }
+            existingUser.setRole(userDto.getRole());
+        }
 
         if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
             if (userDto.getCurrentPassword() == null || userDto.getCurrentPassword().isEmpty()) {
@@ -96,10 +107,12 @@ public class UserService {
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+        feedbackRepository.deleteByUser(user);
+        orderRepository.deleteByUser(user);
         userRepository.delete(user);
     }
 
-    private <T> void updateIfNotNull(T value, java.util.function.Consumer<T> setter) {
+    private <T> void updateIfNotNull(T value, Consumer<T> setter) {
         if (value != null) {
             setter.accept(value);
         }
