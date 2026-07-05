@@ -45,7 +45,9 @@ jobs:
         retention-days: 7
 
     - name: Check dependency CVEs
-      run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+      env:
+        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=$NVD_API_KEY
       continue-on-error: true
 
     - name: Build Docker image
