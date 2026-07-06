@@ -80,11 +80,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             try {
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(secretKey)
+                Claims claims = Jwts.parser()
+                        .verifyWith(secretKey)
                         .build()
-                        .parseClaimsJws(jwt)
-                        .getBody();
+                        .parseSignedClaims(jwt)
+                        .getPayload();
 
                 String role = claims.get("role", String.class);
 

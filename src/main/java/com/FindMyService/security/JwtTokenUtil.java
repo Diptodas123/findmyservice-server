@@ -37,11 +37,11 @@ public class JwtTokenUtil {
         Date exp = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .setSubject(email)
+                .subject(email)
                 .claim("userId", userId)
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(exp)
+                .issuedAt(now)
+                .expiration(exp)
                 .signWith(secretKey)
                 .compact();
     }
@@ -65,11 +65,11 @@ public class JwtTokenUtil {
 
     private Optional<Claims> parseClaims(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
             return Optional.of(claims);
 
