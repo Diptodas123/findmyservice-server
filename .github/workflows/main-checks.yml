@@ -45,6 +45,13 @@ jobs:
         path: target/surefire-reports/
         retention-days: 7
 
+    - name: Cache NVD database
+      uses: actions/cache@v4
+      with:
+        path: ~/.dependency-check/data
+        key: nvd-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+        restore-keys: nvd-${{ runner.os }}-
+
     - name: Check dependency CVEs
       env:
         NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
@@ -64,3 +71,6 @@ jobs:
         context: .
         push: true
         tags: ghcr.io/${{ github.repository }}:latest
+
+    - name: Deploy to Render
+      run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
