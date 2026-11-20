@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: FindMyService
+
+  datasource:
+    url: ${DB_HOST}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  security:
+    user:
+      name: ${SPRING_SECURITY_USERNAME}
+      password: ${SPRING_SECURITY_PASSWORD}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 3600000
+
+logging:
+  level:
+    com.FindMyService.security: DEBUG
+    org.springframework.security: DEBUG
+
+stripe:
+  api:
+    key: ${STRIPE_SECRET_KEY}
+  webhook:
+    secret: ${STRIPE_WEBHOOK_SECRET}
+
+springdoc:
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs
+
+support:
+  email: ${FINDMYSERVICE_EMAIL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

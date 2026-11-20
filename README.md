@@ -17,6 +17,8 @@ A Spring Boot backend for a service marketplace where users can browse providers
 - Maven (with `mvnw` wrapper)
 - Swagger/OpenAPI
 - Docker & Docker Compose
+- Kubernetes & Helm (local)
+- Doppler (secrets management)
 
 ## Project Structure
 - Core app: [src/main/java/com/FindMyService](src/main/java/com/FindMyService)
@@ -34,17 +36,23 @@ A Spring Boot backend for a service marketplace where users can browse providers
 ### Prerequisites
 - **Option 1 - Docker (Recommended):**
   - Docker & Docker Compose installed
-  
+
 - **Option 2 - Local:**
   - macOS/Linux/Windows
   - Java 21 installed (verify with `java -version`)
   - Maven (or use included `mvnw` wrapper)
 
+- **Option 3 - Kubernetes (Local):**
+  - Docker
+  - minikube
+  - kubectl
+  - Helm
+  - Doppler CLI
+
 ### Setup & Run
 
 #### Using Docker (Recommended)
 Build and run with Docker Compose:
-
 ```bash
 docker-compose up --build
 ```
@@ -61,10 +69,31 @@ docker run -p 8080:8080 findmyservice:latest
 
 #### Local Development
 Clone/open the project, then use the Maven wrapper:
-
 ```bash
 ./mvnw -v
 ./mvnw clean install
+```
+
+#### Kubernetes (Local)
+See [K8S_SETUP.md](K8S_SETUP.md) for full details. Quick start:
+
+```bash
+# Start minikube
+minikube start
+minikube addons enable ingress
+
+# One-time setup
+kubectl apply -f k8s/namespace.yaml
+kubectl create secret generic doppler-token-secret \
+  --namespace findmyservice \
+  --from-literal=serviceToken=<your-doppler-token>
+kubectl apply -f k8s/doppler-secret.yaml
+
+# Deploy
+helm upgrade --install findmyservice ./k8s/helm -n findmyservice
+
+# Access (run in a separate terminal)
+minikube service ingress-nginx-controller -n ingress-nginx --url
 ```
 
 ## Run
