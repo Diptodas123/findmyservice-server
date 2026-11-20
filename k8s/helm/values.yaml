@@ -1,0 +1,29 @@
+replicaCount: 1
+
+image:
+  repository: hritamkar03/findmyservice-server
+  tag: latest
+
+namespace: findmyservice
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+ingress:
+  host: findmyservice.local
+
+config:
+  springProfile: prod
+  swaggerEnabled: "true"
+  javaOpts: "-Xms256m -Xmx512m"
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 5
+  cpuUtilization: 70
+  memoryUtilization: 80

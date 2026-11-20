@@ -1,4 +1,4 @@
-name: Main - Build, Test and Security
+name: CI - Build, Test and Push
 
 on:
   push:
@@ -8,10 +8,9 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
-  packages: write
 
 jobs:
-  build-test-security:
+  build-test-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,7 +45,7 @@ jobs:
         retention-days: 7
 
     - name: Cache NVD database
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.dependency-check/data
         key: nvd-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
@@ -58,19 +57,20 @@ jobs:
       run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=$NVD_API_KEY
       continue-on-error: false
 
-    - name: Log in to GHCR
+    - name: Set short SHA
+      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Log in to DockerHub
       uses: docker/login-action@v3
       with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
         context: .
         push: true
-        tags: ghcr.io/findmyservice-api-server:latest
-
-    - name: Deploy to Render
-      run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        tags: |
+          hritamkar03/findmyservice-server:latest
+          hritamkar03/findmyservice-server:${{ env.SHORT_SHA }}

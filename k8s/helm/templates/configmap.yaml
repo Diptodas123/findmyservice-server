@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfile }}
+  SWAGGER_ENABLED: {{ .Values.config.swaggerEnabled | quote }}
+  JAVA_OPTS: {{ .Values.config.javaOpts | quote }}
