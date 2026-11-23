@@ -17,6 +17,8 @@ A Spring Boot backend for a service marketplace where users can browse providers
 - Maven (with `mvnw` wrapper)
 - Swagger/OpenAPI
 - Docker & Docker Compose
+- Kubernetes & Helm (local)
+- Doppler (secrets management)
 
 ## Project Structure
 - Core app: [src/main/java/com/FindMyService](src/main/java/com/FindMyService)
@@ -34,17 +36,23 @@ A Spring Boot backend for a service marketplace where users can browse providers
 ### Prerequisites
 - **Option 1 - Docker (Recommended):**
   - Docker & Docker Compose installed
-  
+
 - **Option 2 - Local:**
   - macOS/Linux/Windows
   - Java 21 installed (verify with `java -version`)
   - Maven (or use included `mvnw` wrapper)
 
+- **Option 3 - Kubernetes (Local):**
+  - Docker
+  - minikube
+  - kubectl
+  - Helm
+  - Doppler CLI
+
 ### Setup & Run
 
 #### Using Docker (Recommended)
 Build and run with Docker Compose:
-
 ```bash
 docker-compose up --build
 ```
@@ -61,11 +69,46 @@ docker run -p 8080:8080 findmyservice:latest
 
 #### Local Development
 Clone/open the project, then use the Maven wrapper:
-
 ```bash
 ./mvnw -v
 ./mvnw clean install
 ```
+
+#### Kubernetes (Local)
+See [K8S_SETUP.md](K8S_SETUP.md) for full details. Quick start:
+
+```bash
+# Start minikube
+minikube start
+minikube addons enable ingress
+minikube addons enable metrics-server  # required for HPA memory scaling
+
+# One-time setup
+kubectl apply -f k8s/namespace.yaml
+
+# Install Doppler operator (registers the DopplerSecret CRD)
+kubectl apply -f https://github.com/DopplerHQ/kubernetes-operator/releases/latest/download/recommended.yaml
+kubectl -n doppler-operator-system wait --for=condition=Available deployment/doppler-operator-controller-manager --timeout=60s
+
+kubectl create secret generic doppler-token-secret \
+  --namespace findmyservice \
+  --from-literal=serviceToken=<your-doppler-service-token>
+kubectl apply -f k8s/doppler-secret.yaml
+
+# Deploy
+helm upgrade --install findmyservice ./k8s/helm -n findmyservice
+
+# Add hosts entry (one-time)
+echo "127.0.0.1 findmyservice.local" | sudo tee -a /etc/hosts
+
+# Start tunnel (keep this terminal open)
+minikube service ingress-nginx-controller -n ingress-nginx --url                                                                                                                                                                                                                                                                                                                                            
+minikube tunnel     # if the above one doesn't work
+```
+
+> **Doppler token**: must be a **project-scoped Service Token** (generated in Doppler dashboard under your project → Access). A personal/CLI token will fail with "You must specify a project".
+
+> **Access**: after tunnel is running, the app is available at `http://findmyservice.local` (port 80, no port number needed).
 
 ## Run
 Start the application:
