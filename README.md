@@ -12,29 +12,24 @@ A Spring Boot backend for a service marketplace where users can browse providers
 
 ## Tech Stack
 - Java 21 (OpenJDK)
-<<<<<<< Updated upstream
-- Spring Boot 3.5.7
-=======
 - Spring Boot 4.2.0
->>>>>>> Stashed changes
 - Spring Security (JWT)
-- Maven (with `mvnw` wrapper)
+- Maven
 - Swagger/OpenAPI
 - Docker & Docker Compose
-- Kubernetes & Helm (local)
+- Kubernetes & Helm
 - Doppler (secrets management)
 
 ## Project Structure
-- Core app: [src/main/java/com/FindMyService](src/main/java/com/FindMyService)
-  - Config: [config](src/main/java/com/FindMyService/config)
-  - Controllers: [controller](src/main/java/com/FindMyService/controller)
-  - Models/DTOs/Enums: [model](src/main/java/com/FindMyService/model)
-  - Repositories: [repository](src/main/java/com/FindMyService/repository)
-  - Security (JWT): [security](src/main/java/com/FindMyService/security)
-  - Services: [service](src/main/java/com/FindMyService/service)
-  - Utilities: [utils](src/main/java/com/FindMyService/utils)
-- Tests: [src/test/java/com/FindMyService](src/test/java/com/FindMyService)
-- Entry point: [FindMyServiceApplication.java](src/main/java/com/FindMyService/FindMyServiceApplication.java)
+- `src/main/java/com/FindMyService/`
+  - `config/` — app configuration (security, Swagger, exception handling)
+  - `controller/` — REST controllers
+  - `model/` — entities, DTOs, enums
+  - `repository/` — JPA repositories
+  - `security/` — JWT filter and utilities
+  - `service/` — business logic
+  - `utils/` — shared utilities
+- `src/test/java/com/FindMyService/` — unit and integration tests
 
 ## Getting Started
 ### Prerequisites
@@ -44,9 +39,9 @@ A Spring Boot backend for a service marketplace where users can browse providers
 - **Option 2 - Local:**
   - macOS/Linux/Windows
   - Java 21 installed (verify with `java -version`)
-  - Maven (or use included `mvnw` wrapper)
+  - Maven
 
-- **Option 3 - Kubernetes (Local):**
+- **Option 3 - Kubernetes:**
   - Docker
   - minikube
   - kubectl
@@ -72,15 +67,12 @@ docker run -p 8080:8080 findmyservice:latest
 ```
 
 #### Local Development
-Clone/open the project, then use the Maven wrapper:
+Clone/open the project, then run:
 ```bash
-./mvnw -v
-./mvnw clean install
+mvn clean install
 ```
 
-#### Kubernetes (Local)
-See [K8S_SETUP.md](K8S_SETUP.md) for full details. Quick start:
-
+#### Kubernetes
 ```bash
 # Start minikube
 minikube start
@@ -106,7 +98,7 @@ helm upgrade --install findmyservice ./k8s/helm -n findmyservice
 echo "127.0.0.1 findmyservice.local" | sudo tee -a /etc/hosts
 
 # Start tunnel (keep this terminal open)
-minikube service ingress-nginx-controller -n ingress-nginx --url                                                                                                                                                                                                                                                                                                                                            
+minikube service ingress-nginx-controller -n ingress-nginx --url
 minikube tunnel     # if the above one doesn't work
 ```
 
@@ -118,7 +110,7 @@ minikube tunnel     # if the above one doesn't work
 Start the application:
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 By default the server runs on `http://localhost:8080`.
@@ -127,14 +119,9 @@ By default the server runs on `http://localhost:8080`.
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-See configuration in [SwaggerConfig.java](src/main/java/com/FindMyService/config/SwaggerConfig.java).
-
 ## Authentication
-- Login endpoint issues JWT: see [AuthController.java](src/main/java/com/FindMyService/controller/AuthController.java) and [AuthService.java](src/main/java/com/FindMyService/service/AuthService.java).
-- JWT filter: [JwtAuthFilter.java](src/main/java/com/FindMyService/security/JwtAuthFilter.java).
-- Security rules: [SecurityConfig.java](src/main/java/com/FindMyService/config/SecurityConfig.java).
+JWT-based authentication:
 
-Typical flow:
 1. Register: `POST /api/auth/register`
 2. Login: `POST /api/auth/login` → receives `token`
 3. Use `Authorization: Bearer <token>` for protected endpoints
@@ -162,39 +149,32 @@ docker run -p 9090:8080 findmyservice:latest
 ### Local Development
 ```bash
 # Build
-./mvnw clean install
+mvn clean install
 
 # Run
-./mvnw spring-boot:run
+mvn spring-boot:run
 
 # Test
-./mvnw test
-
-# Format (if Spotless/Checkstyle configured)
-./mvnw spotless:apply || ./mvnw checkstyle:check
+mvn test
 ```
 
 ## Configuration
-- Application properties: [src/main/resources](src/main/resources)
-- Adjust Spring profiles, DB connection, and Swagger settings as needed.
+Application properties are in `src/main/resources/`. Adjust Spring profiles, DB connection, and Swagger settings as needed.
 
 ## Endpoints Overview
-Controllers define primary routes:
-- Auth: [AuthController.java](src/main/java/com/FindMyService/controller/AuthController.java)
-- Users: [UserController.java](src/main/java/com/FindMyService/controller/UserController.java)
-- Providers: [ProviderController.java](src/main/java/com/FindMyService/controller/ProviderController.java)
-- Service Catalog: [ServiceCatalogController.java](src/main/java/com/FindMyService/controller/ServiceCatalogController.java)
-- Orders: [OrderController.java](src/main/java/com/FindMyService/controller/OrderController.java)
-- Feedback: [FeedbackController.java](src/main/java/com/FindMyService/controller/FeedbackController.java)
+- `POST /api/auth/register` — register
+- `POST /api/auth/login` — login
+- `/api/users/**` — user management
+- `/api/providers/**` — provider management
+- `/api/services/**` — service catalog
+- `/api/orders/**` — orders
+- `/api/feedback/**` — feedback
 
 Refer to Swagger UI for full request/response schemas.
 
 ## Testing
-- Unit/integration tests live under [src/test/java/com/FindMyService](src/test/java/com/FindMyService).
-- Run:
-
 ```bash
-./mvnw test
+mvn test
 ```
 
 ## Contributing
