@@ -85,17 +85,30 @@ minikube addons enable metrics-server  # required for HPA memory scaling
 
 # One-time setup
 kubectl apply -f k8s/namespace.yaml
+
+# Install Doppler operator (registers the DopplerSecret CRD)
+kubectl apply -f https://github.com/DopplerHQ/kubernetes-operator/releases/latest/download/recommended.yaml
+kubectl -n doppler-operator-system wait --for=condition=Available deployment/doppler-operator-controller-manager --timeout=60s
+
 kubectl create secret generic doppler-token-secret \
   --namespace findmyservice \
-  --from-literal=serviceToken=<your-doppler-token>
+  --from-literal=serviceToken=<your-doppler-service-token>
 kubectl apply -f k8s/doppler-secret.yaml
 
 # Deploy
 helm upgrade --install findmyservice ./k8s/helm -n findmyservice
 
-# Access (run in a separate terminal)
-minikube service ingress-nginx-controller -n ingress-nginx --url
+# Add hosts entry (one-time)
+echo "127.0.0.1 findmyservice.local" | sudo tee -a /etc/hosts
+
+# Start tunnel (keep this terminal open)
+minikube service ingress-nginx-controller -n ingress-nginx --url                                                                                                                                                                                                                                                                                                                                            
+minikube tunnel     # if the above one doesn't work
 ```
+
+> **Doppler token**: must be a **project-scoped Service Token** (generated in Doppler dashboard under your project → Access). A personal/CLI token will fail with "You must specify a project".
+
+> **Access**: after tunnel is running, the app is available at `http://findmyservice.local` (port 80, no port number needed).
 
 ## Run
 Start the application:
