@@ -81,6 +81,7 @@ See [K8S_SETUP.md](K8S_SETUP.md) for full details. Quick start:
 # Start minikube
 minikube start
 minikube addons enable ingress
+minikube addons enable metrics-server  # required for HPA memory scaling
 
 # One-time setup
 kubectl apply -f k8s/namespace.yaml

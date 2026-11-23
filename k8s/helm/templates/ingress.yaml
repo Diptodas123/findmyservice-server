@@ -4,6 +4,7 @@ metadata:
   name: {{ .Release.Name }}-ingress
   namespace: {{ .Values.namespace }}
 spec:
+  # TODO: add tls block before deploying to production
   rules:
     - host: {{ .Values.ingress.host }}
       http:
