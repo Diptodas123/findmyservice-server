@@ -12,7 +12,7 @@ A Spring Boot backend for a service marketplace where users can browse providers
 
 ## Tech Stack
 - Java 21 (OpenJDK)
-- Spring Boot 4.0.3
+- Spring Boot 4.2.0
 - Spring Security (JWT)
 - Maven
 - Swagger/OpenAPI
