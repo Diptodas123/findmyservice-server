@@ -8,69 +8,121 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
+  security-events: write
 
 jobs:
-  build-test-push:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v7
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: 'maven'
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
 
-    - name: Build and test
-      run: mvn verify
+      - name: Build and test
+        run: mvn verify
 
-    - name: Generate test report
-      if: always()
-      uses: dorny/test-reporter@v1
-      with:
-        name: Maven Tests
-        path: target/surefire-reports/*.xml
-        reporter: java-junit
-        fail-on-error: true
+      - name: Generate test report
+        if: always()
+        uses: dorny/test-reporter@v3
+        with:
+          name: Maven Tests
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
 
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: target/surefire-reports/
-        retention-days: 7
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: target/surefire-reports/
+          retention-days: 7
 
-    - name: Cache NVD database
-      uses: actions/cache@v5
-      with:
-        path: ~/.dependency-check/data
-        key: nvd-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
-        restore-keys: nvd-${{ runner.os }}-
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: target/site/jacoco/jacoco.xml
+          flags: unittests
+          name: codecov-umbrella
 
-    - name: Check dependency CVEs
-      env:
-        NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-      run: mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7 -DnvdApiKey=$NVD_API_KEY
-      continue-on-error: false
+  security-scan:
+    needs: build-and-test
+    runs-on: ubuntu-latest
 
-    - name: Set short SHA
-      run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
 
-    - name: Log in to DockerHub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: |
-          hritamkar03/findmyservice-server:latest
-          hritamkar03/findmyservice-server:${{ env.SHORT_SHA }}
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/maven@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --sarif-file-output=snyk.sarif
+
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  push:
+    needs: security-scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: |
+            hritamkar03/findmyservice-server:latest
+            hritamkar03/findmyservice-server:${{ env.SHORT_SHA }}
+
+      - name: Run Snyk to check Docker image for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: hritamkar03/findmyservice-server:${{ env.SHORT_SHA }}
+          args: --severity-threshold=high --sarif-file-output=snyk-docker.sarif
+
+      - name: Upload Snyk Docker results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: snyk-docker.sarif
+
+      - name: Push Docker image
+        run: |
+          docker push hritamkar03/findmyservice-server:latest
+          docker push hritamkar03/findmyservice-server:${{ env.SHORT_SHA }}
